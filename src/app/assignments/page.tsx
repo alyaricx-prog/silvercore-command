@@ -104,15 +104,11 @@ export default function AssignmentsPage() {
     })
     if (authErr) { setMsg('Error: ' + authErr.message); setInviting(false); return }
     if (authData.user) {
-      const { error: profErr } = await supabase.from('profiles').insert({
-        id: authData.user.id,
-        organisation_id: profile.organisation_id,
-        full_name: inviteName.trim(),
-        phone: '',
-        avatar_url: '',
-        role: 'employee',
-        group_name: inviteGroup.trim() || 'A',
-        is_active: true,
+      const { error: profErr } = await supabase.rpc('create_employee_profile', {
+        user_id: authData.user.id,
+        org_id: profile.organisation_id,
+        p_full_name: inviteName.trim(),
+        p_group_name: inviteGroup.trim() || 'A',
       })
       if (profErr) { setMsg('Auth OK but profile error: ' + profErr.message) }
       else {
