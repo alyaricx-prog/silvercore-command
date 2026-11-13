@@ -62,9 +62,9 @@ export default function VaultPage() {
         supabase.from('documents').select('*')
           .eq('organisation_id', prof.organisation_id)
           .order('created_at', { ascending: false }),
-        supabase.from('assignments').select('id, address, group_name')
+        supabase.from('assignments').select('*')
           .eq('organisation_id', prof.organisation_id).limit(200),
-        supabase.from('profiles').select('id, full_name')
+        supabase.from('profiles').select('*')
           .eq('organisation_id', prof.organisation_id),
       ])
       setDocuments(docRes.data || [])

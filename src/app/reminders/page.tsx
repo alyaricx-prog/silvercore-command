@@ -75,7 +75,7 @@ export default function RemindersPage() {
       if (isHost) {
         queries.push(
           supabase.from('profiles').select('*').eq('organisation_id', prof.organisation_id),
-          supabase.from('assignments').select('id, address, group_name')
+          supabase.from('assignments').select('*')
             .eq('organisation_id', prof.organisation_id).eq('status', 'open').limit(100),
         )
       }

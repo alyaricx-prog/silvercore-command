@@ -26,14 +26,20 @@ export type Assignment = {
   id: string
   organisation_id: string
   title: string
-  description: string
-  assigned_to: string
-  created_by: string
+  description: string | null
+  assigned_to: string | null
+  created_by: string | null
   status: 'pending' | 'acknowledged' | 'in_progress' | 'completed' | 'cancelled'
   priority: 'low' | 'normal' | 'high' | 'urgent'
-  due_at: string
-  completed_at: string
+  due_at: string | null
+  completed_at: string | null
   created_at: string
+  // location & display fields
+  address: string | null
+  group_name: string | null
+  notes: string | null
+  lat: number | null
+  lng: number | null
 }
 
 export type DealLog = {
