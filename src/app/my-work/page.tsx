@@ -7,7 +7,7 @@ import PageSkeleton from '@/components/Skeleton'
 import AssignmentCard from '@/components/AssignmentCard'
 import QuickLogModal from '@/components/QuickLogModal'
 import CheckInModal from '@/components/CheckInModal'
-import type { Profile, Assignment, DealLog } from '@/lib/types'
+import type { Profile, Assignment, DealLog, TrainingNote } from '@/lib/types'
 import { sendPush } from '@/lib/sendPush'
 
 export default function MyWorkPage() {
@@ -18,6 +18,7 @@ export default function MyWorkPage() {
   const [logTarget, setLogTarget] = useState<string | null>(null)
   const [checkInTarget, setCheckInTarget] = useState<string | null>(null)
   const [toast, setToast] = useState('')
+  const [trainingNotes, setTrainingNotes] = useState<TrainingNote[]>([])
   const router = useRouter()
   const supabase = createClient()
 
@@ -30,11 +31,12 @@ export default function MyWorkPage() {
       if (!prof) { router.push('/auth/login'); return }
       setProfile(prof)
 
-      const { data: a } = await supabase
-        .from('assignments').select('*')
-        .eq('assigned_to', user.id)
-        .order('created_at', { ascending: false })
+      const [{ data: a }, { data: tn }] = await Promise.all([
+        supabase.from('assignments').select('*').eq('assigned_to', user.id).order('created_at', { ascending: false }),
+        supabase.from('training_notes').select('*').eq('organisation_id', prof.organisation_id),
+      ])
       setAssignments(a || [])
+      setTrainingNotes(tn || [])
       setLoading(false)
     }
     load()
@@ -48,7 +50,7 @@ export default function MyWorkPage() {
     if (!error) setAssignments(prev => prev.map(a => a.id === id ? { ...a, status } : a))
   }
 
-  async function handleLogDeal(data: { outcome: DealLog['outcome']; notes: string; lat: number | null; lng: number | null }) {
+  async function handleLogDeal(data: { outcome: DealLog['outcome']; notes: string; lat: number | null; lng: number | null; objection_type: string | null; follow_up_at: string | null }) {
     if (!profile || !logTarget) return
     await supabase.from('deal_logs').insert({
       organisation_id: profile.organisation_id,
@@ -58,6 +60,8 @@ export default function MyWorkPage() {
       notes: data.notes || null,
       lat: data.lat,
       lng: data.lng,
+      objection_type: data.objection_type || null,
+      follow_up_at: data.follow_up_at || null,
     })
     setLogTarget(null)
     showToast('Deal logged ✓')
@@ -160,6 +164,7 @@ export default function MyWorkPage() {
       {logTarget && profile && (
         <QuickLogModal
           assignmentId={logTarget}
+          trainingNotes={trainingNotes}
           onSubmit={handleLogDeal}
           onClose={() => setLogTarget(null)}
         />

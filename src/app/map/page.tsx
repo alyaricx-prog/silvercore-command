@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
-import type { Profile, DealLog } from '@/lib/types'
+import type { Profile, DealLog, LocationNote, FrictionReport, TrainingNote } from '@/lib/types'
 import { OUTCOME_COLORS, OUTCOME_LABELS } from '@/components/MapView'
 import { useTheme } from '@/providers/ThemeProvider'
 
@@ -209,8 +209,32 @@ export default function MapPage() {
     return () => { supabase.removeChannel(channel) }
   }, [loading])
 
-  const [editLog, setEditLog]   = useState<DealLog | null>(null)
+  const [editLog, setEditLog]       = useState<DealLog | null>(null)
   const [editSaving, setEditSaving] = useState(false)
+  const [locNotes, setLocNotes]     = useState<LocationNote[]>([])
+  const [frictions, setFrictions]   = useState<FrictionReport[]>([])
+  const [trainingNotes, setTrainingNotes] = useState<TrainingNote[]>([])
+  const [showLocNoteForm, setShowLocNoteForm] = useState(false)
+  const [locNoteText, setLocNoteText]         = useState('')
+  const [showFrictionForm, setShowFrictionForm] = useState(false)
+  const [frictionCat, setFrictionCat]           = useState<FrictionReport['category']>('other')
+  const [frictionNote, setFrictionNote]         = useState('')
+
+  // Load location notes, friction reports, training notes
+  useEffect(() => {
+    if (!orgIdRef.current) return
+    async function loadExtra() {
+      const [{ data: ln }, { data: fr }, { data: tn }] = await Promise.all([
+        supabase.from('location_notes').select('*').eq('organisation_id', orgIdRef.current!),
+        supabase.from('friction_reports').select('*').eq('organisation_id', orgIdRef.current!).eq('resolved', false),
+        supabase.from('training_notes').select('*').eq('organisation_id', orgIdRef.current!),
+      ])
+      setLocNotes(ln || [])
+      setFrictions(fr || [])
+      setTrainingNotes(tn || [])
+    }
+    if (!loading) loadExtra()
+  }, [loading])
 
   async function saveEdit(outcome: DealLog['outcome'], notes: string) {
     if (!editLog) return
@@ -225,6 +249,37 @@ export default function MapPage() {
     if (!confirm('Delete this deal log? This cannot be undone.')) return
     await supabase.from('deal_logs').delete().eq('id', id)
     setLogs(prev => prev.filter(l => l.id !== id))
+  }
+
+  async function saveLocationNote() {
+    if (!profile || !myLocation || !locNoteText.trim()) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('location_notes').insert({
+      organisation_id: profile.organisation_id,
+      created_by: user.id,
+      lat: myLocation.lat,
+      lng: myLocation.lng,
+      note: locNoteText.trim(),
+    }).select().single()
+    if (data) setLocNotes(prev => [data, ...prev])
+    setLocNoteText(''); setShowLocNoteForm(false)
+  }
+
+  async function saveFrictionReport() {
+    if (!profile || !myLocation) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('friction_reports').insert({
+      organisation_id: profile.organisation_id,
+      reported_by: user.id,
+      lat: myLocation.lat,
+      lng: myLocation.lng,
+      category: frictionCat,
+      note: frictionNote.trim() || null,
+    }).select().single()
+    if (data) setFrictions(prev => [data, ...prev])
+    setFrictionNote(''); setShowFrictionForm(false)
   }
 
   const pinned  = logs.filter(l => l.lat && l.lng)
@@ -420,6 +475,83 @@ export default function MapPage() {
       </div>
 
       <Nav role={profile!.role} />
+
+      {/* ── Location Note + Friction Report buttons ──────────── */}
+      <div className="fixed z-30 flex gap-2" style={{ bottom: 80, right: 16 }}>
+        <button onClick={() => { setShowLocNoteForm(v => !v); setShowFrictionForm(false) }}
+          className="px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition"
+          style={{ background: 'var(--sc-card)', color: 'var(--sc-hi)', border: '1px solid var(--sc-rim)' }}>
+          📍 Note
+        </button>
+        <button onClick={() => { setShowFrictionForm(v => !v); setShowLocNoteForm(false) }}
+          className="px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition"
+          style={{ background: 'var(--sc-card)', color: 'var(--sc-hi)', border: '1px solid var(--sc-rim)' }}>
+          ⚠️ Flag
+        </button>
+      </div>
+
+      {/* ── Location Note Form ────────────────────────────────── */}
+      {showLocNoteForm && (
+        <div className="fixed z-40 inset-x-4 rounded-2xl p-4 shadow-2xl"
+             style={{ bottom: 130, background: 'var(--sc-card)', border: '1px solid var(--sc-rim)' }}>
+          <p className="text-xs font-semibold text-hi mb-2">📍 Add location note</p>
+          <p className="text-xs text-dim mb-2">Visible to your whole team for this location.</p>
+          <textarea value={locNoteText} onChange={e => setLocNoteText(e.target.value)}
+            placeholder="e.g. Dog in yard, Spanish speaker, call after 5pm…"
+            rows={2} className="w-full bg-well border border-rim rounded-lg px-3 py-2 text-sm text-hi placeholder-dim resize-none mb-3" />
+          <div className="flex gap-2">
+            <button onClick={() => setShowLocNoteForm(false)}
+              className="flex-1 py-2 rounded-xl text-xs font-semibold text-dim border border-rim">Cancel</button>
+            <button onClick={saveLocationNote} disabled={!locNoteText.trim() || !myLocation}
+              className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 disabled:opacity-40">Save Note</button>
+          </div>
+          {!myLocation && <p className="text-xs text-red-400 mt-2 text-center">Enable location to pin a note</p>}
+        </div>
+      )}
+
+      {/* ── Friction Report Form ──────────────────────────────── */}
+      {showFrictionForm && (
+        <div className="fixed z-40 inset-x-4 rounded-2xl p-4 shadow-2xl"
+             style={{ bottom: 130, background: 'var(--sc-card)', border: '1px solid var(--sc-rim)' }}>
+          <p className="text-xs font-semibold text-hi mb-3">⚠️ Flag this location</p>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {(['hoa','dangerous','competitor','no_soliciting','other'] as FrictionReport['category'][]).map(c => (
+              <button key={c} onClick={() => setFrictionCat(c)}
+                className={`py-2 rounded-lg text-xs font-semibold transition border ${frictionCat === c ? 'bg-red-900/40 border-red-500 text-red-300' : 'border-rim text-dim'}`}>
+                {c === 'hoa' ? 'HOA' : c === 'no_soliciting' ? 'No Solicit' : c.charAt(0).toUpperCase() + c.slice(1)}
+              </button>
+            ))}
+          </div>
+          <textarea value={frictionNote} onChange={e => setFrictionNote(e.target.value)}
+            placeholder="Details (optional)"
+            rows={2} className="w-full bg-well border border-rim rounded-lg px-3 py-2 text-sm text-hi placeholder-dim resize-none mb-3" />
+          <div className="flex gap-2">
+            <button onClick={() => setShowFrictionForm(false)}
+              className="flex-1 py-2 rounded-xl text-xs font-semibold text-dim border border-rim">Cancel</button>
+            <button onClick={saveFrictionReport} disabled={!myLocation}
+              className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-red-600 disabled:opacity-40">Report</button>
+          </div>
+          {!myLocation && <p className="text-xs text-red-400 mt-2 text-center">Enable location to flag</p>}
+        </div>
+      )}
+
+      {/* ── Location notes & friction count badge ─────────────── */}
+      {(locNotes.length > 0 || frictions.length > 0) && (
+        <div className="fixed z-30 flex gap-2 text-xs" style={{ top: 120, right: 12 }}>
+          {locNotes.length > 0 && (
+            <div className="px-2 py-1 rounded-lg font-semibold"
+                 style={{ background: 'var(--sc-card)', border: '1px solid var(--sc-rim)', color: 'var(--sc-dim)' }}>
+              📍 {locNotes.length}
+            </div>
+          )}
+          {frictions.length > 0 && (
+            <div className="px-2 py-1 rounded-lg font-semibold text-red-400"
+                 style={{ background: 'var(--sc-card)', border: '1px solid rgba(239,68,68,0.3)' }}>
+              ⚠️ {frictions.length}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Edit Deal Log Modal ───────────────────────────────── */}
       {editLog && (

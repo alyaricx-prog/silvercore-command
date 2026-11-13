@@ -4,9 +4,9 @@ import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import PageSkeleton from '@/components/Skeleton'
-import type { Profile, Contract, AuditEvent, DealLog } from '@/lib/types'
+import type { Profile, Contract, AuditEvent, DealLog , PulseEntry, FrictionReport, TrainingNote, Announcement } from '@/lib/types'
 
-type Tab = 'report' | 'contracts' | 'audit'
+type Tab = 'report' | 'contracts' | 'pulse' | 'friction' | 'training' | 'announce' | 'audit'
 
 const riskColor = (r: Contract['risk_level']) =>
   r === 'low' ? 'text-green-400' : r === 'high' ? 'text-red-400' : 'text-yellow-400'
@@ -38,6 +38,16 @@ export default function IntelligencePage() {
   const [deals, setDeals] = useState<DealLog[]>([])
   const [teamSize, setTeamSize] = useState(0)
 
+  // Phase 8 state
+  const [pulseEntries, setPulseEntries]   = useState<PulseEntry[]>([])
+  const [frictions, setFrictions]         = useState<FrictionReport[]>([])
+  const [trainingNotes, setTrainingNotes] = useState<TrainingNote[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [newAnnounce, setNewAnnounce]     = useState('')
+  const [savingAnnounce, setSavingAnnounce] = useState(false)
+  const [newTraining, setNewTraining]     = useState({ outcome_type: 'lost' as TrainingNote['outcome_type'], objection_type: '', body: '' })
+  const [savingTraining, setSavingTraining] = useState(false)
+
   // Contracts state
   const [contracts, setContracts] = useState<Contract[]>([])
   const [showContractForm, setShowContractForm] = useState(false)
@@ -66,17 +76,25 @@ export default function IntelligencePage() {
       }
       setProfile(prof)
 
-      const [{ data: d }, { data: t }, { data: c }, { data: a }] = await Promise.all([
+      const [{ data: d }, { data: t }, { data: c }, { data: a }, { data: pu }, { data: fr }, { data: tn }, { data: an }] = await Promise.all([
         supabase.from('deal_logs').select('*').eq('organisation_id', prof.organisation_id)
           .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
         supabase.from('profiles').select('id').eq('organisation_id', prof.organisation_id),
         supabase.from('contracts').select('*').eq('organisation_id', prof.organisation_id).order('created_at', { ascending: false }),
         supabase.from('audit_events').select('*').eq('organisation_id', prof.organisation_id).order('created_at', { ascending: false }).limit(50),
+        supabase.from('pulse_entries').select('*').eq('organisation_id', prof.organisation_id).order('created_at', { ascending: false }).limit(100),
+        supabase.from('friction_reports').select('*').eq('organisation_id', prof.organisation_id).order('created_at', { ascending: false }),
+        supabase.from('training_notes').select('*').eq('organisation_id', prof.organisation_id).order('created_at', { ascending: false }),
+        supabase.from('announcements').select('*').eq('organisation_id', prof.organisation_id).order('created_at', { ascending: false }),
       ])
       setDeals(d || [])
       setTeamSize((t || []).length)
       setContracts(c || [])
       setAudit(a || [])
+      setPulseEntries(pu || [])
+      setFrictions(fr || [])
+      setTrainingNotes(tn || [])
+      setAnnouncements(an || [])
       setLoading(false)
     }
     load()
@@ -152,6 +170,59 @@ export default function IntelligencePage() {
     signed:     'bg-blue-900/30 text-blue-300',
   }
 
+  async function saveAnnouncement() {
+    if (!profile || !newAnnounce.trim()) return
+    setSavingAnnounce(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('announcements').insert({
+      organisation_id: profile.organisation_id,
+      created_by: user.id,
+      body: newAnnounce.trim(),
+      pinned: true,
+    }).select().single()
+    if (data) setAnnouncements(prev => [data, ...prev])
+    setNewAnnounce('')
+    setSavingAnnounce(false)
+  }
+
+  async function unpinAnnouncement(id: string) {
+    await supabase.from('announcements').update({ pinned: false }).eq('id', id)
+    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, pinned: false } : a))
+  }
+
+  async function deleteAnnouncement(id: string) {
+    await supabase.from('announcements').delete().eq('id', id)
+    setAnnouncements(prev => prev.filter(a => a.id !== id))
+  }
+
+  async function saveTrainingNote() {
+    if (!profile || !newTraining.body.trim()) return
+    setSavingTraining(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('training_notes').insert({
+      organisation_id: profile.organisation_id,
+      created_by: user.id,
+      outcome_type: newTraining.outcome_type,
+      objection_type: newTraining.objection_type.trim() || null,
+      body: newTraining.body.trim(),
+    }).select().single()
+    if (data) setTrainingNotes(prev => [data, ...prev])
+    setNewTraining({ outcome_type: 'lost', objection_type: '', body: '' })
+    setSavingTraining(false)
+  }
+
+  async function deleteTrainingNote(id: string) {
+    await supabase.from('training_notes').delete().eq('id', id)
+    setTrainingNotes(prev => prev.filter(t => t.id !== id))
+  }
+
+  async function resolveFriction(id: string) {
+    await supabase.from('friction_reports').update({ resolved: true }).eq('id', id)
+    setFrictions(prev => prev.map(f => f.id === id ? { ...f, resolved: true } : f))
+  }
+
   return (
     <main className="sc-enter min-h-screen bg-page text-hi pb-28">
       <header className="px-5 pt-12 pb-4 border-b border-rim">
@@ -159,12 +230,20 @@ export default function IntelligencePage() {
         <h1 className="text-xl font-bold">Data & Reports</h1>
       </header>
 
-      {/* Tabs */}
-      <div className="flex border-b border-rim">
-        {(['report', 'contracts', 'audit'] as Tab[]).map(t => (
+      {/* Tabs — scrollable */}
+      <div className="flex overflow-x-auto border-b border-rim" style={{ scrollbarWidth: 'none' }}>
+        {([
+          ['report',   'Report'],
+          ['announce', `📢 ${announcements.filter(a=>a.pinned).length}`],
+          ['pulse',    '💚 Pulse'],
+          ['friction', `⚠️ ${frictions.filter(f=>!f.resolved).length}`],
+          ['training', '📖 Training'],
+          ['contracts',`Contracts`],
+          ['audit',    'Audit'],
+        ] as [Tab, string][]).map(([t, label]) => (
           <button key={t} onClick={() => { setTab(t); setMsg('') }}
-            className={`flex-1 py-3 text-sm font-medium capitalize transition ${tab === t ? 'text-blue-400 border-b-2 border-blue-400' : 'text-dim'}`}>
-            {t === 'report' ? 'Weekly Report' : t === 'contracts' ? `Contracts (${contracts.length})` : 'Audit Trail'}
+            className={`shrink-0 px-4 py-3 text-sm font-medium transition whitespace-nowrap ${tab === t ? 'text-blue-400 border-b-2 border-blue-400' : 'text-dim'}`}>
+            {label}
           </button>
         ))}
       </div>
@@ -398,6 +477,155 @@ export default function IntelligencePage() {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {/* ── ANNOUNCEMENTS ── */}
+      {tab === 'announce' && (
+        <div className="px-5 py-4 space-y-4">
+          <div className="bg-card border border-rim rounded-xl p-4 space-y-3">
+            <h2 className="text-xs text-dim uppercase tracking-widest">Post Announcement</h2>
+            <textarea value={newAnnounce} onChange={e => setNewAnnounce(e.target.value)}
+              placeholder="e.g. New pitch starts Monday. Avoid Oak Street this week."
+              rows={3} className="w-full bg-well border border-rim rounded-lg px-3 py-2 text-sm text-hi placeholder-dim resize-none" />
+            <button onClick={saveAnnouncement} disabled={savingAnnounce || !newAnnounce.trim()}
+              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-semibold py-2.5 rounded-xl transition text-sm">
+              {savingAnnounce ? 'Posting…' : '📢 Post to All Reps'}
+            </button>
+          </div>
+          {announcements.length === 0 && <p className="text-dim text-sm text-center py-8">No announcements yet.</p>}
+          {announcements.map(a => (
+            <div key={a.id} className={`bg-card border rounded-xl px-4 py-3 ${a.pinned ? 'border-blue-700/40' : 'border-rim opacity-60'}`}>
+              <p className="text-sm text-hi leading-snug">{a.body}</p>
+              <p className="text-xs text-dim mt-1">{new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+              <div className="flex gap-2 mt-2">
+                {a.pinned && (
+                  <button onClick={() => unpinAnnouncement(a.id)}
+                    className="text-xs text-dim border border-rim px-2 py-1 rounded-lg hover:text-hi transition">Unpin</button>
+                )}
+                <button onClick={() => deleteAnnouncement(a.id)}
+                  className="text-xs text-red-400 border border-red-900/30 px-2 py-1 rounded-lg hover:bg-red-900/20 transition">Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── PULSE ── */}
+      {tab === 'pulse' && (
+        <div className="px-5 py-4 space-y-4">
+          <div className="bg-card border border-rim rounded-xl p-4">
+            <h2 className="text-xs text-dim uppercase tracking-widest mb-3">Team Pulse — Last 7 Days</h2>
+            {pulseEntries.length === 0 ? (
+              <p className="text-dim text-sm text-center py-6">No pulse entries yet. Reps submit from their dashboard.</p>
+            ) : (
+              <>
+                <div className="flex justify-between text-xs text-dim mb-2">
+                  <span>Avg score</span>
+                  <span className="font-bold text-hi">{(pulseEntries.reduce((s,p) => s + p.score, 0) / pulseEntries.length).toFixed(1)} / 5</span>
+                </div>
+                <div className="h-2 bg-well rounded-full mb-4">
+                  <div className="h-full rounded-full bg-green-500 transition-all"
+                    style={{ width: `${(pulseEntries.reduce((s,p) => s + p.score, 0) / pulseEntries.length / 5) * 100}%` }} />
+                </div>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {pulseEntries.map(p => (
+                    <div key={p.id} className="flex items-start gap-3 bg-well rounded-xl px-3 py-2">
+                      <span className="text-lg">{p.score >= 4 ? '🟢' : p.score >= 3 ? '🟡' : '🔴'}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-hi">{p.score}/5</p>
+                        {p.note && <p className="text-xs text-dim truncate">{p.note}</p>}
+                        <p className="text-xs text-dim mt-0.5">{new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── FRICTION REPORTS ── */}
+      {tab === 'friction' && (
+        <div className="px-5 py-4 space-y-3">
+          {frictions.length === 0 && <p className="text-dim text-sm text-center py-12">No friction reports. Reps flag problem locations from the map.</p>}
+          {frictions.map(f => (
+            <div key={f.id} className={`bg-card border rounded-xl px-4 py-3 ${f.resolved ? 'border-rim opacity-50' : 'border-red-900/40'}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${f.resolved ? 'bg-gray-800 text-dim' : 'bg-red-900/40 text-red-300'}`}>
+                  {f.category.replace('_', ' ').toUpperCase()}
+                </span>
+                <span className="text-xs text-dim">{new Date(f.created_at).toLocaleDateString()}</span>
+              </div>
+              {f.address && <p className="text-sm text-hi truncate">{f.address}</p>}
+              {f.note && <p className="text-xs text-dim mt-1">{f.note}</p>}
+              <p className="text-xs text-dim mt-1">📍 {f.lat.toFixed(4)}, {f.lng.toFixed(4)}</p>
+              {!f.resolved && (
+                <button onClick={() => resolveFriction(f.id)}
+                  className="mt-2 text-xs text-green-400 border border-green-900/30 px-3 py-1 rounded-lg hover:bg-green-900/20 transition">
+                  Mark Resolved
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── TRAINING NOTES ── */}
+      {tab === 'training' && (
+        <div className="px-5 py-4 space-y-4">
+          <div className="bg-card border border-rim rounded-xl p-4 space-y-3">
+            <h2 className="text-xs text-dim uppercase tracking-widest">Add Training Note</h2>
+            <div>
+              <label className="text-xs text-dim block mb-1">Outcome type</label>
+              <select value={newTraining.outcome_type}
+                onChange={e => setNewTraining(v => ({ ...v, outcome_type: e.target.value as TrainingNote['outcome_type'] }))}
+                className="w-full bg-well border border-rim rounded-lg px-3 py-2 text-sm text-hi">
+                <option value="lost">Lost</option>
+                <option value="closed">Closed</option>
+                <option value="follow_up">Follow Up</option>
+                <option value="no_contact">No Contact</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-dim block mb-1">Objection type (optional)</label>
+              <input type="text" value={newTraining.objection_type}
+                onChange={e => setNewTraining(v => ({ ...v, objection_type: e.target.value }))}
+                placeholder="e.g. price, competitor, not interested…"
+                className="w-full bg-well border border-rim rounded-lg px-3 py-2 text-sm text-hi placeholder-dim" />
+            </div>
+            <div>
+              <label className="text-xs text-dim block mb-1">Coaching tip</label>
+              <textarea value={newTraining.body}
+                onChange={e => setNewTraining(v => ({ ...v, body: e.target.value }))}
+                placeholder="What should a rep do or say in this situation?"
+                rows={3} className="w-full bg-well border border-rim rounded-lg px-3 py-2 text-sm text-hi placeholder-dim resize-none" />
+            </div>
+            <button onClick={saveTrainingNote} disabled={savingTraining || !newTraining.body.trim()}
+              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-semibold py-2.5 rounded-xl transition text-sm">
+              {savingTraining ? 'Saving…' : '📖 Save Training Note'}
+            </button>
+          </div>
+          {trainingNotes.length === 0 && <p className="text-dim text-sm text-center py-6">No training notes yet.</p>}
+          {trainingNotes.map(n => (
+            <div key={n.id} className="bg-card border border-rim rounded-xl px-4 py-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-900/40 text-blue-300 capitalize">
+                  {n.outcome_type.replace('_', ' ')}
+                </span>
+                {n.objection_type && (
+                  <span className="text-xs text-dim">· {n.objection_type}</span>
+                )}
+              </div>
+              <p className="text-sm text-hi leading-snug mt-1">{n.body}</p>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-dim">{new Date(n.created_at).toLocaleDateString()}</p>
+                <button onClick={() => deleteTrainingNote(n.id)}
+                  className="text-xs text-red-400 hover:underline">Delete</button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

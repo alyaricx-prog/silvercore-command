@@ -11,18 +11,25 @@ const OUTCOMES: { value: Outcome; label: string; color: string; emoji: string }[
   { value: 'no_contact', label: 'No Contact',  color: 'border-gray-600 bg-well text-lo',                     emoji: '📵' },
 ]
 
+const COMMON_OBJECTIONS = ['Price', 'Already have service', 'Renting / not my decision', 'Not interested', 'Competitor', 'Come back later', 'No soliciting', 'Other']
+
 type Props = {
   assignmentId: string
-  onSubmit: (data: { outcome: Outcome; notes: string; lat: number | null; lng: number | null }) => Promise<void>
+  trainingNotes?: { outcome_type: string; objection_type: string | null; body: string }[]
+  onSubmit: (data: { outcome: Outcome; notes: string; lat: number | null; lng: number | null; objection_type: string | null; follow_up_at: string | null }) => Promise<void>
   onClose: () => void
 }
 
-export default function QuickLogModal({ assignmentId, onSubmit, onClose }: Props) {
-  const [outcome,    setOutcome]    = useState<Outcome | null>(null)
-  const [notes,      setNotes]      = useState('')
-  const [locating,   setLocating]   = useState(false)
-  const [location,   setLocation]   = useState<{ lat: number; lng: number } | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+export default function QuickLogModal({ assignmentId, trainingNotes = [], onSubmit, onClose }: Props) {
+  const [outcome,       setOutcome]       = useState<Outcome | null>(null)
+  const [notes,         setNotes]         = useState('')
+  const [objectionType, setObjectionType] = useState('')
+  const [followUpDate,  setFollowUpDate]  = useState('')
+  const [locating,      setLocating]      = useState(false)
+  const [location,      setLocation]      = useState<{ lat: number; lng: number } | null>(null)
+  const [submitting,    setSubmitting]    = useState(false)
+  const [submitted,     setSubmitted]     = useState(false)
+  const [tipNote,       setTipNote]       = useState<string | null>(null)
 
   async function handleLocate() {
     if (!navigator.geolocation) return
@@ -37,8 +44,48 @@ export default function QuickLogModal({ assignmentId, onSubmit, onClose }: Props
   async function handleSubmit() {
     if (!outcome) return
     setSubmitting(true)
-    await onSubmit({ outcome, notes, lat: location?.lat ?? null, lng: location?.lng ?? null })
+    await onSubmit({
+      outcome,
+      notes,
+      lat: location?.lat ?? null,
+      lng: location?.lng ?? null,
+      objection_type: (outcome === 'lost' && objectionType) ? objectionType : null,
+      follow_up_at: (outcome === 'follow_up' && followUpDate) ? new Date(followUpDate).toISOString() : null,
+    })
+    // Show matching training tip if one exists
+    const match = trainingNotes.find(t =>
+      t.outcome_type === outcome &&
+      (!t.objection_type || t.objection_type.toLowerCase() === objectionType.toLowerCase())
+    ) || trainingNotes.find(t => t.outcome_type === outcome && !t.objection_type)
+    setTipNote(match?.body ?? null)
     setSubmitting(false)
+    setSubmitted(true)
+  }
+
+  if (submitted) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+        <div className="w-full max-w-lg bg-card border border-rim rounded-t-2xl p-6 pb-10 space-y-4" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-base text-green-400">✓ Logged</h2>
+            <button onClick={onClose} className="text-lo hover:text-hi text-xl leading-none">×</button>
+          </div>
+          {tipNote ? (
+            <>
+              <p className="text-xs text-dim uppercase tracking-widest">Training Tip</p>
+              <div className="bg-blue-900/30 border border-blue-700/40 rounded-xl px-4 py-3">
+                <p className="text-sm text-hi leading-snug">{tipNote}</p>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-dim">No specific tip for this outcome yet — check the Intelligence tab.</p>
+          )}
+          <button onClick={onClose} className="w-full bg-well border border-rim text-hi font-semibold py-2.5 rounded-xl transition text-sm">
+            Done
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -47,7 +94,7 @@ export default function QuickLogModal({ assignmentId, onSubmit, onClose }: Props
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-card border border-rim rounded-t-2xl p-6 pb-10 space-y-5"
+        className="w-full max-w-lg bg-card border border-rim rounded-t-2xl p-6 pb-10 space-y-5 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -59,7 +106,7 @@ export default function QuickLogModal({ assignmentId, onSubmit, onClose }: Props
           {OUTCOMES.map(o => (
             <button
               key={o.value}
-              onClick={() => setOutcome(o.value)}
+              onClick={() => { setOutcome(o.value); setObjectionType(''); setFollowUpDate('') }}
               className={`flex items-center gap-2 px-3 py-3 rounded-xl border-2 text-sm font-medium transition ${
                 outcome === o.value ? o.color : 'border-rim bg-well text-lo'
               }`}
@@ -69,6 +116,32 @@ export default function QuickLogModal({ assignmentId, onSubmit, onClose }: Props
             </button>
           ))}
         </div>
+
+        {outcome === 'lost' && (
+          <div>
+            <label className="text-xs text-dim uppercase tracking-widest block mb-2">Objection type</label>
+            <div className="flex flex-wrap gap-2">
+              {COMMON_OBJECTIONS.map(obj => (
+                <button key={obj} onClick={() => setObjectionType(prev => prev === obj ? '' : obj)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition ${
+                    objectionType === obj ? 'border-red-500 bg-red-900/40 text-red-300' : 'border-rim text-dim'
+                  }`}>{obj}</button>
+              ))}
+            </div>
+            <input type="text" value={COMMON_OBJECTIONS.includes(objectionType) ? '' : objectionType}
+              onChange={e => setObjectionType(e.target.value)}
+              placeholder="Or type a custom objection…"
+              className="mt-2 w-full bg-well border border-rim rounded-xl px-3 py-2 text-sm text-hi placeholder-dim focus:outline-none" />
+          </div>
+        )}
+
+        {outcome === 'follow_up' && (
+          <div>
+            <label className="text-xs text-dim uppercase tracking-widest block mb-2">Follow-up date</label>
+            <input type="datetime-local" value={followUpDate} onChange={e => setFollowUpDate(e.target.value)}
+              className="w-full bg-well border border-rim rounded-xl px-3 py-2.5 text-sm text-hi focus:outline-none focus:border-blue-500" />
+          </div>
+        )}
 
         <textarea
           value={notes}

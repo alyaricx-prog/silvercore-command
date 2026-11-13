@@ -4,13 +4,19 @@ import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import PageSkeleton from '@/components/Skeleton'
-import type { Profile, Assignment } from '@/lib/types'
+import type { Profile, Assignment, Announcement, PulseEntry } from '@/lib/types'
 import { usePushSubscription } from '@/lib/usePushSubscription'
 
 export default function DashboardPage() {
-  const [profile,     setProfile]     = useState<Profile | null>(null)
-  const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [loading,     setLoading]     = useState(true)
+  const [profile,       setProfile]       = useState<Profile | null>(null)
+  const [assignments,   setAssignments]   = useState<Assignment[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [dismissed,     setDismissed]     = useState<Set<string>>(new Set())
+  const [todayPulse,    setTodayPulse]    = useState<PulseEntry | null | undefined>(undefined)
+  const [pulseScore,    setPulseScore]    = useState(3)
+  const [pulseNote,     setPulseNote]     = useState('')
+  const [savingPulse,   setSavingPulse]   = useState(false)
+  const [loading,       setLoading]       = useState(true)
   const router  = useRouter()
   usePushSubscription((profile as any)?.organisation_id ?? null)
   const supabase = createClient()
@@ -24,25 +30,68 @@ export default function DashboardPage() {
         .from('profiles').select('*').eq('id', user.id).single()
       if (!prof) { router.push('/onboard'); return }
 
-      // Employee first-login: send to their onboarding wizard
       if (!prof.onboarded && prof.role === 'employee') {
         router.push('/onboard/employee'); return
       }
 
       setProfile(prof)
 
+      const today = new Date(); today.setHours(0,0,0,0)
       const isHost = prof.role === 'host' || prof.role === 'cohost'
       const q = supabase.from('assignments').select('*')
         .eq('organisation_id', prof.organisation_id)
-      const { data: a } = isHost
-        ? await q.neq('status', 'cancelled').order('created_at', { ascending: false }).limit(50)
-        : await q.eq('assigned_to', user.id).neq('status', 'cancelled').order('created_at', { ascending: false }).limit(20)
+
+      const [
+        { data: a },
+        { data: ann },
+        { data: dis },
+        { data: pulse },
+      ] = await Promise.all([
+        isHost
+          ? q.neq('status', 'cancelled').order('created_at', { ascending: false }).limit(50)
+          : q.eq('assigned_to', user.id).neq('status', 'cancelled').order('created_at', { ascending: false }).limit(20),
+        supabase.from('announcements').select('*')
+          .eq('organisation_id', prof.organisation_id).eq('pinned', true)
+          .order('created_at', { ascending: false }),
+        supabase.from('announcement_dismissals').select('announcement_id')
+          .eq('profile_id', user.id),
+        supabase.from('pulse_entries').select('*')
+          .eq('organisation_id', prof.organisation_id)
+          .eq('employee_id', user.id)
+          .gte('created_at', today.toISOString())
+          .limit(1),
+      ])
 
       setAssignments(a || [])
+      setAnnouncements(ann || [])
+      setDismissed(new Set((dis || []).map((d: { announcement_id: string }) => d.announcement_id)))
+      setTodayPulse(pulse && pulse.length > 0 ? pulse[0] : null)
       setLoading(false)
     }
     load()
   }, [])
+
+  async function dismissAnnouncement(id: string) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('announcement_dismissals').insert({ announcement_id: id, profile_id: user.id })
+    setDismissed(prev => new Set([...prev, id]))
+  }
+
+  async function submitPulse() {
+    if (!profile) return
+    setSavingPulse(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('pulse_entries').insert({
+      organisation_id: profile.organisation_id,
+      employee_id: user.id,
+      score: pulseScore,
+      note: pulseNote.trim() || null,
+    }).select().single()
+    if (data) setTodayPulse(data)
+    setSavingPulse(false)
+  }
 
   if (loading) return <PageSkeleton variant="dashboard" />
 
@@ -73,6 +122,57 @@ export default function DashboardPage() {
       </header>
 
       <div className="px-5 space-y-6">
+        {/* Announcements */}
+        {announcements.filter(a => !dismissed.has(a.id)).map(a => (
+          <div key={a.id} className="bg-blue-900/30 border border-blue-700/40 rounded-xl px-4 py-3 flex items-start gap-3">
+            <span className="text-lg mt-0.5">📢</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-blue-200 leading-snug">{a.body}</p>
+              <p className="text-xs text-blue-400 mt-1">{new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+            </div>
+            <button onClick={() => dismissAnnouncement(a.id)} className="text-blue-400 hover:text-blue-200 text-lg leading-none shrink-0 mt-0.5">×</button>
+          </div>
+        ))}
+
+        {/* Daily Pulse */}
+        {todayPulse === null && (
+          <div className="bg-card border border-rim rounded-xl p-4">
+            <h2 className="text-xs text-dim uppercase tracking-widest mb-3">Daily Pulse</h2>
+            <p className="text-xs text-dim mb-3">How&apos;s the floor feeling today?</p>
+            <div className="flex justify-between gap-2 mb-3">
+              {[1,2,3,4,5].map(n => (
+                <button key={n} onClick={() => setPulseScore(n)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-bold transition border ${pulseScore === n ? 'bg-blue-600 border-blue-500 text-white' : 'bg-well border-rim text-dim'}`}>
+                  {n}
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-dim mb-3">
+              <span>Rough</span><span>Great</span>
+            </div>
+            <textarea
+              value={pulseNote}
+              onChange={e => setPulseNote(e.target.value)}
+              placeholder="Any notes? (optional)"
+              rows={2}
+              className="w-full bg-well border border-rim rounded-lg px-3 py-2 text-sm text-hi placeholder-dim resize-none mb-3"
+            />
+            <button onClick={submitPulse} disabled={savingPulse}
+              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl transition text-sm">
+              {savingPulse ? 'Saving…' : 'Submit Pulse'}
+            </button>
+          </div>
+        )}
+        {todayPulse && (
+          <div className="bg-card border border-rim rounded-xl px-4 py-3 flex items-center gap-3">
+            <span className="text-xl">{todayPulse.score >= 4 ? '🟢' : todayPulse.score >= 3 ? '🟡' : '🔴'}</span>
+            <div>
+              <p className="text-sm font-medium text-hi">Pulse submitted — {todayPulse.score}/5</p>
+              {todayPulse.note && <p className="text-xs text-dim mt-0.5">{todayPulse.note}</p>}
+            </div>
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[

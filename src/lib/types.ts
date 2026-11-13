@@ -48,9 +48,12 @@ export type DealLog = {
   assignment_id: string
   logged_by: string
   outcome: 'closed' | 'lost' | 'follow_up' | 'no_contact'
+  objection_type: string | null
   notes: string
   lat: number
   lng: number
+  follow_up_at: string | null
+  follow_up_sent: boolean
   created_at: string
 }
 
@@ -195,5 +198,59 @@ export type Document = {
   file_path: string
   mime_type: string | null
   size_bytes: number | null
+  created_at: string
+}
+
+// ── Phase 8 ──────────────────────────────────────────────────
+
+export type PulseEntry = {
+  id: string
+  organisation_id: string
+  employee_id: string
+  score: number
+  note: string | null
+  created_at: string
+}
+
+export type FrictionReport = {
+  id: string
+  organisation_id: string
+  reported_by: string
+  lat: number
+  lng: number
+  address: string | null
+  category: 'hoa' | 'dangerous' | 'competitor' | 'no_soliciting' | 'other'
+  note: string | null
+  resolved: boolean
+  created_at: string
+}
+
+export type Announcement = {
+  id: string
+  organisation_id: string
+  created_by: string
+  body: string
+  pinned: boolean
+  created_at: string
+}
+
+export type TrainingNote = {
+  id: string
+  organisation_id: string
+  created_by: string
+  outcome_type: 'closed' | 'lost' | 'follow_up' | 'no_contact'
+  objection_type: string | null
+  body: string
+  created_at: string
+}
+
+export type LocationNote = {
+  id: string
+  organisation_id: string
+  created_by: string
+  lat: number
+  lng: number
+  address: string | null
+  note: string
   created_at: string
 }
