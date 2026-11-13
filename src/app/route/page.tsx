@@ -100,7 +100,7 @@ export default function RoutePage() {
     window.open(
       /iPhone|iPad|iPod/.test(navigator.userAgent)
         ? `maps://?daddr=${a.lat},${a.lng}`
-        : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a.address)}`,
+        : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a.address ?? '')}`,
       '_blank',
     )
   }

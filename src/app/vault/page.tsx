@@ -187,7 +187,7 @@ export default function VaultPage() {
               <option value="">Org-wide (no specific job)</option>
               {assignments.map(a => (
                 <option key={a.id} value={a.id}>
-                  {a.address.substring(0, 40)} {a.group_name ? `· ${a.group_name}` : ''}
+                  {(a.address ?? '').substring(0, 40)} {a.group_name ? `· ${a.group_name}` : ''}
                 </option>
               ))}
             </select>
@@ -216,7 +216,7 @@ export default function VaultPage() {
             <option value="">All files</option>
             <option value="__orgwide">Org-wide only</option>
             {assignments.map(a => (
-              <option key={a.id} value={a.id}>{a.address.substring(0, 25)}…</option>
+              <option key={a.id} value={a.id}>{(a.address ?? '').substring(0, 25)}…</option>
             ))}
           </select>
         </div>
@@ -281,7 +281,7 @@ export default function VaultPage() {
 type DocCardProps = {
   doc: Document
   profiles: { id: string; full_name: string }[]
-  assignment?: { address: string; group_name?: string | null } | undefined
+  assignment?: { address: string | null; group_name?: string | null } | undefined
   onDownload: () => void
   onDelete?: () => void
 }
@@ -298,7 +298,7 @@ function DocCard({ doc, profiles, assignment, onDownload, onDelete }: DocCardPro
           {doc.size_bytes && <span>{formatBytes(doc.size_bytes)}</span>}
           {uploader && <span>· {uploader.full_name}</span>}
           {assignment && (
-            <span className="truncate">· 📍 {assignment.address.substring(0, 20)}…</span>
+            <span className="truncate">· 📍 {(assignment.address ?? '').substring(0, 20)}…</span>
           )}
           <span>· {new Date(doc.created_at).toLocaleDateString()}</span>
         </div>

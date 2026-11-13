@@ -67,7 +67,7 @@ export default function RemindersPage() {
       setProfile(prof)
       const isHost = prof.role === 'host' || prof.role === 'cohost'
 
-      const queries: Promise<unknown>[] = [
+      const queries: Promise<any>[] = [
         supabase.from('reminders').select('*')
           .eq('organisation_id', prof.organisation_id)
           .order('remind_at', { ascending: true }),
@@ -282,7 +282,7 @@ export default function RemindersPage() {
                           ? <span>👤 {assignee.full_name}</span>
                           : <span>📢 All members</span>
                         }
-                        {linked && <span>📍 {linked.address.substring(0, 30)}…</span>}
+                        {linked && <span>📍 {(linked.address ?? '').substring(0, 30)}…</span>}
                       </div>
                     </div>
                     {isHost && (
