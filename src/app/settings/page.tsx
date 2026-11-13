@@ -196,7 +196,7 @@ export default function SettingsPage() {
           <div className="bg-card border border-rim rounded-2xl divide-y divide-rim">
             <Row label="App" value="SilverCore Command" />
             <Row label="Version" value="1.0.0" />
-            <Row label="Build" value="Phase 4" />
+            <Row label="Build" value="1.0.0-beta" />
             <Row label="Platform" value="Progressive Web App" />
           </div>
         </section>

@@ -59,7 +59,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="sc-enter min-h-screen bg-page text-hi pb-20">
+    <main className="sc-enter min-h-screen bg-page text-hi pb-28">
       {/* Header */}
       <header className="px-5 pt-12 pb-6">
         <p className="text-xs text-dim uppercase tracking-widest mb-1">SilverCore Command</p>
