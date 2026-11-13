@@ -99,6 +99,9 @@ export default function DashboardPage() {
                 icon="📋"
               />
               <QuickLink href="/map" title="Deal Map" subtitle="Live field activity" icon="🗺" />
+              <QuickLink href="/customers" title="Customers" subtitle="CRM & timelines" icon="👥" />
+              <QuickLink href="/intelligence" title="Intelligence" subtitle="Reports & contracts" icon="📊" />
+              <QuickLink href="/goals" title="Goals & Badges" subtitle="Team performance" icon="🏆" />
             </>
           ) : (
             <>
@@ -109,6 +112,8 @@ export default function DashboardPage() {
                 icon="💼"
               />
               <QuickLink href="/map" title="Deal Map" subtitle="Team activity" icon="🗺" />
+              <QuickLink href="/customers" title="Customers" subtitle="Your contacts" icon="👥" />
+              <QuickLink href="/goals" title="Goals & Badges" subtitle="Your progress" icon="🏆" />
             </>
           )}
         </div>

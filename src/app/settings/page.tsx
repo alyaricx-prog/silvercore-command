@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
+import Link from 'next/link'
+
 import PageSkeleton from '@/components/Skeleton'
 import { useTheme, type Theme } from '@/providers/ThemeProvider'
 import { usePushToggle } from '@/lib/usePushSubscription'
@@ -222,7 +224,23 @@ export default function SettingsPage() {
           </form>
         </section>
 
-        {/* ── App info ──────────────────────────────────────── */}
+        {/* ── Customisation (host only) ──────────────────────── */}
+        {(profile?.role === 'host' || profile?.role === 'cohost') && (
+          <section className="space-y-4">
+            <h2 className="text-xs font-semibold text-dim uppercase tracking-widest">Customisation</h2>
+            <div className="bg-card border border-rim rounded-2xl overflow-hidden">
+              <Link href="/settings/custom-fields" className="flex items-center justify-between px-4 py-3 hover:bg-well transition">
+                <div>
+                  <p className="text-sm font-medium text-hi">Custom Fields</p>
+                  <p className="text-xs text-dim">Add fields to assignments, customers, deals</p>
+                </div>
+                <span className="text-dim text-sm">›</span>
+              </Link>
+            </div>
+          </section>
+        )}
+
+                {/* ── App info ──────────────────────────────────────── */}
         <section className="space-y-4">
           <h2 className="text-xs font-semibold text-dim uppercase tracking-widest">About</h2>
           <div className="bg-card border border-rim rounded-2xl divide-y divide-rim">
