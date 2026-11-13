@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
+import PageSkeleton from '@/components/Skeleton'
 import { useTheme, type Theme } from '@/providers/ThemeProvider'
 import type { Profile } from '@/lib/types'
 
@@ -77,16 +78,12 @@ export default function SettingsPage() {
     router.push('/auth/login')
   }
 
-  if (loading) return (
-    <main className="min-h-screen bg-page flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-    </main>
-  )
+  if (loading) return <PageSkeleton variant="settings" />
 
   if (!profile) return null
 
   return (
-    <main className="min-h-screen bg-page text-hi pb-28">
+    <main className="sc-enter min-h-screen bg-page text-hi pb-28">
       <header className="px-5 pt-12 pb-4 border-b border-rim">
         <p className="text-xs text-dim uppercase tracking-widest mb-1">Account</p>
         <h1 className="text-xl font-bold">Settings</h1>

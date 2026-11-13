@@ -32,8 +32,18 @@
   --sc-rim:  #e2e8f0;
   --sc-rim2: #cbd5e1;
   --sc-hi:   #0f172a;
-  --sc-lo:   #64748b;
-  --sc-dim:  #94a3b8;
+  --sc-lo:   #475569;
+  --sc-dim:  #64748b;
+
+  /* Tinted badges, alerts and accents were tuned for dark backgrounds.
+     Remap those palette steps so they stay readable on white. */
+  --color-blue-300: #1d4ed8;   --color-blue-400: #2563eb;   --color-blue-900: #bfdbfe;
+  --color-green-300: #15803d;  --color-green-400: #16a34a;  --color-green-900: #bbf7d0;
+  --color-red-300: #b91c1c;    --color-red-400: #dc2626;    --color-red-800: #fca5a5;  --color-red-900: #fecaca;
+  --color-amber-300: #b45309;  --color-amber-900: #fde68a;
+  --color-yellow-300: #a16207; --color-yellow-900: #fef08a;
+  --color-purple-300: #7e22ce; --color-purple-400: #9333ea; --color-purple-900: #e9d5ff;
+  --color-gray-300: #374151;   --color-gray-600: #9ca3af;   --color-gray-700: #e5e7eb;
 }
 
 body {
@@ -41,6 +51,35 @@ body {
   color: var(--sc-hi);
   font-family: ui-sans-serif, system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Safe areas (iPhone home indicator / notch) ─────────────────── */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Motion & feedback ──────────────────────────────────────────── */
+@keyframes sc-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes sc-shimmer {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+.sc-enter    { animation: sc-enter 0.22s ease-out both; }
+.sc-skeleton { background: var(--sc-well); border-radius: 0.5rem; animation: sc-shimmer 1.4s ease-in-out infinite; }
+
+button { transition-property: color, background-color, border-color, opacity, transform; transition-duration: 150ms; }
+button:not(:disabled):active { transform: scale(0.97); }
+button:disabled { cursor: not-allowed; }
+
+:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-enter, .sc-skeleton { animation: none; }
+  button:not(:disabled):active { transform: none; }
 }
 
 /* ── Leaflet fixes ──────────────────────────────────────────────── */

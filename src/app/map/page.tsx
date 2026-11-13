@@ -65,7 +65,7 @@ export default function MapPage() {
   )
 
   return (
-    <main className="h-screen bg-page text-hi flex flex-col">
+    <main className="sc-enter h-screen bg-page text-hi flex flex-col">
       {/* Header */}
       <header className="px-5 pt-12 pb-3 border-b border-rim shrink-0">
         <div className="flex items-center justify-between">

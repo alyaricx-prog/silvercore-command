@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
+import PageSkeleton from '@/components/Skeleton'
 import AssignmentCard from '@/components/AssignmentCard'
 import QuickLogModal from '@/components/QuickLogModal'
 import CheckInModal from '@/components/CheckInModal'
@@ -94,14 +95,10 @@ export default function MyWorkPage() {
     ? assignments.filter(a => open.includes(a.status))
     : assignments.filter(a => a.status === 'completed' || a.status === 'cancelled')
 
-  if (loading) return (
-    <main className="min-h-screen bg-page flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-    </main>
-  )
+  if (loading) return <PageSkeleton variant="list" />
 
   return (
-    <main className="min-h-screen bg-page text-hi pb-24">
+    <main className="sc-enter min-h-screen bg-page text-hi pb-24">
       <header className="px-5 pt-12 pb-4 border-b border-rim">
         <p className="text-xs text-dim uppercase tracking-widest mb-1">Field</p>
         <h1 className="text-xl font-bold">My Work</h1>

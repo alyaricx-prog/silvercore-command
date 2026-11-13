@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
+import PageSkeleton from '@/components/Skeleton'
 import type { Profile, Assignment } from '@/lib/types'
 
 export default function DashboardPage() {
@@ -41,11 +42,7 @@ export default function DashboardPage() {
     load()
   }, [])
 
-  if (loading) return (
-    <main className="min-h-screen bg-page flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-    </main>
-  )
+  if (loading) return <PageSkeleton variant="dashboard" />
 
   if (!profile) return null
 
@@ -62,7 +59,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-page text-hi pb-20">
+    <main className="sc-enter min-h-screen bg-page text-hi pb-20">
       {/* Header */}
       <header className="px-5 pt-12 pb-6">
         <p className="text-xs text-dim uppercase tracking-widest mb-1">SilverCore Command</p>
@@ -113,6 +110,29 @@ export default function DashboardPage() {
             </>
           )}
         </div>
+
+        {/* Empty state */}
+        {assignments.length === 0 && (
+          <div className="bg-card border border-dashed border-rim2 rounded-xl px-5 py-8 text-center">
+            <p className="text-3xl mb-2">{isHost ? '📋' : '🎯'}</p>
+            <p className="text-sm font-semibold text-hi">
+              {isHost ? 'No assignments yet' : "You're all caught up"}
+            </p>
+            <p className="text-xs text-dim mt-1">
+              {isHost
+                ? 'Create your first assignment and it will show up here.'
+                : 'New assignments from your manager will appear here.'}
+            </p>
+            {isHost && (
+              <a
+                href="/assignments"
+                className="inline-block mt-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition"
+              >
+                Create assignment
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Recent */}
         {assignments.length > 0 && (

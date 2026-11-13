@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
+import PageSkeleton from '@/components/Skeleton'
 import AssignmentCard from '@/components/AssignmentCard'
 import type { Profile, Assignment } from '@/lib/types'
 
@@ -121,14 +122,10 @@ export default function AssignmentsPage() {
 
   const filtered = filter === 'all' ? assignments : assignments.filter(a => a.status === filter)
 
-  if (loading) return (
-    <main className="min-h-screen bg-page flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-    </main>
-  )
+  if (loading) return <PageSkeleton variant="list" />
 
   return (
-    <main className="min-h-screen bg-page text-hi pb-24">
+    <main className="sc-enter min-h-screen bg-page text-hi pb-24">
       <header className="px-5 pt-12 pb-4 border-b border-rim">
         <p className="text-xs text-dim uppercase tracking-widest mb-1">Command</p>
         <h1 className="text-xl font-bold">Assignments</h1>
