@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { ThemeProvider } from '@/providers/ThemeProvider'
+import OfflineBanner from '@/components/OfflineBanner'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -21,14 +23,40 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+// Inline script: prevent theme flash + register service worker
+const initScript = `
+(function(){
+  // Theme: set data-theme before React hydrates to prevent flash
+  try {
+    var t = localStorage.getItem('sc-theme') || 'dark';
+    var r = t === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : t;
+    document.documentElement.setAttribute('data-theme', r);
+  } catch(e){}
+
+  // Service Worker: register after page load
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .catch(function(err) { console.warn('SW registration failed:', err); });
+    });
+  }
+})();
+`
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" data-theme="dark">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: initScript }} />
+      </head>
+      <body className={inter.className}>
+        <ThemeProvider>
+          <OfflineBanner />
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }

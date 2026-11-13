@@ -6,10 +6,10 @@ import Nav from '@/components/Nav'
 import type { Profile, Assignment } from '@/lib/types'
 
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const [profile,     setProfile]     = useState<Profile | null>(null)
   const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
+  const [loading,     setLoading]     = useState(true)
+  const router  = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
@@ -19,7 +19,13 @@ export default function DashboardPage() {
 
       const { data: prof } = await supabase
         .from('profiles').select('*').eq('id', user.id).single()
-      if (!prof) { router.push('/auth/login'); return }
+      if (!prof) { router.push('/onboard'); return }
+
+      // Employee first-login: send to their onboarding wizard
+      if (!prof.onboarded && prof.role === 'employee') {
+        router.push('/onboard/employee'); return
+      }
+
       setProfile(prof)
 
       const isHost = prof.role === 'host' || prof.role === 'cohost'
@@ -36,17 +42,17 @@ export default function DashboardPage() {
   }, [])
 
   if (loading) return (
-    <main className="min-h-screen bg-gray-950 flex items-center justify-center">
+    <main className="min-h-screen bg-page flex items-center justify-center">
       <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
     </main>
   )
 
   if (!profile) return null
 
-  const isHost = profile.role === 'host' || profile.role === 'cohost'
-  const pending = assignments.filter(a => a.status === 'pending').length
+  const isHost   = profile.role === 'host' || profile.role === 'cohost'
+  const pending    = assignments.filter(a => a.status === 'pending').length
   const inProgress = assignments.filter(a => a.status === 'in_progress' || a.status === 'acknowledged').length
-  const completed = assignments.filter(a => a.status === 'completed').length
+  const completed  = assignments.filter(a => a.status === 'completed').length
 
   const greeting = () => {
     const h = new Date().getHours()
@@ -56,33 +62,35 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white pb-20">
+    <main className="min-h-screen bg-page text-hi pb-20">
       {/* Header */}
       <header className="px-5 pt-12 pb-6">
-        <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">SilverCore Command</p>
+        <p className="text-xs text-dim uppercase tracking-widest mb-1">SilverCore Command</p>
         <h1 className="text-2xl font-bold">{greeting()},</h1>
         <p className="text-xl text-blue-400 font-semibold">{profile.full_name.split(' ')[0]}</p>
-        <p className="text-xs text-gray-500 mt-1 capitalize">{profile.role}{profile.group_name ? ` · ${profile.group_name}` : ''}</p>
+        <p className="text-xs text-dim mt-1 capitalize">
+          {profile.role}{profile.group_name ? ` · ${profile.group_name}` : ''}
+        </p>
       </header>
 
       <div className="px-5 space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Pending',     value: pending,    color: 'text-gray-300' },
-            { label: 'Active',      value: inProgress, color: 'text-blue-400' },
-            { label: 'Completed',   value: completed,  color: 'text-green-400' },
+            { label: 'Pending',   value: pending,    color: 'text-hi' },
+            { label: 'Active',    value: inProgress, color: 'text-blue-400' },
+            { label: 'Completed', value: completed,  color: 'text-green-400' },
           ].map(s => (
-            <div key={s.label} className="bg-gray-900 rounded-xl p-4 text-center border border-gray-800">
+            <div key={s.label} className="bg-card rounded-xl p-4 text-center border border-rim">
               <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+              <div className="text-xs text-dim mt-0.5">{s.label}</div>
             </div>
           ))}
         </div>
 
         {/* Quick links */}
         <div className="space-y-3">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Quick Access</h2>
+          <h2 className="text-xs font-semibold text-dim uppercase tracking-widest">Quick Access</h2>
           {isHost ? (
             <>
               <QuickLink
@@ -109,17 +117,20 @@ export default function DashboardPage() {
         {/* Recent */}
         {assignments.length > 0 && (
           <div className="space-y-2">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Recent</h2>
+            <h2 className="text-xs font-semibold text-dim uppercase tracking-widest">Recent</h2>
             {assignments.slice(0, 3).map(a => (
-              <div key={a.id} className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex items-center justify-between">
+              <div
+                key={a.id}
+                className="bg-card border border-rim rounded-xl px-4 py-3 flex items-center justify-between"
+              >
                 <div>
-                  <p className="text-sm font-medium">{a.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 capitalize">{a.status.replace('_', ' ')}</p>
+                  <p className="text-sm font-medium text-hi">{a.title}</p>
+                  <p className="text-xs text-dim mt-0.5 capitalize">{a.status.replace('_', ' ')}</p>
                 </div>
                 <span className={`w-2 h-2 rounded-full ${
-                  a.status === 'completed' ? 'bg-green-400' :
+                  a.status === 'completed'  ? 'bg-green-400' :
                   a.status === 'in_progress' ? 'bg-blue-400' :
-                  a.status === 'acknowledged' ? 'bg-purple-400' : 'bg-gray-600'
+                  a.status === 'acknowledged'? 'bg-purple-400' : 'bg-gray-600'
                 }`} />
               </div>
             ))}
@@ -132,15 +143,21 @@ export default function DashboardPage() {
   )
 }
 
-function QuickLink({ href, title, subtitle, icon }: { href: string; title: string; subtitle: string; icon: string }) {
+function QuickLink({ href, title, subtitle, icon }: {
+  href: string; title: string; subtitle: string; icon: string
+}) {
   return (
-    <a href={href} className="flex items-center gap-4 bg-gray-900 border border-gray-800 hover:border-gray-600 rounded-xl px-4 py-4 transition group">
+    <a
+      href={href}
+      className="flex items-center gap-4 bg-card border border-rim hover:border-rim2 rounded-xl px-4 py-4 transition group"
+    >
       <span className="text-2xl">{icon}</span>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm">{title}</p>
-        <p className="text-xs text-gray-500">{subtitle}</p>
+        <p className="font-semibold text-sm text-hi">{title}</p>
+        <p className="text-xs text-dim">{subtitle}</p>
       </div>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition shrink-0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+        className="w-4 h-4 text-dim group-hover:text-lo transition shrink-0">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
       </svg>
     </a>

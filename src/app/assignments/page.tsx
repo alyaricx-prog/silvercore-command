@@ -94,8 +94,6 @@ export default function AssignmentsPage() {
     if (!inviteEmail.trim() || !inviteName.trim() || !profile) return
     setInviting(true)
     setMsg('')
-    // Create auth user via admin invite (requires service role) - fallback: show SQL
-    // For now, we'll attempt signUp and create profile
     const tempPw = Math.random().toString(36).slice(2) + 'Aa1!'
     const { data: authData, error: authErr } = await supabase.auth.signUp({
       email: inviteEmail.trim(),
@@ -124,26 +122,26 @@ export default function AssignmentsPage() {
   const filtered = filter === 'all' ? assignments : assignments.filter(a => a.status === filter)
 
   if (loading) return (
-    <main className="min-h-screen bg-gray-950 flex items-center justify-center">
+    <main className="min-h-screen bg-page flex items-center justify-center">
       <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
     </main>
   )
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white pb-24">
-      <header className="px-5 pt-12 pb-4 border-b border-gray-800">
-        <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Command</p>
+    <main className="min-h-screen bg-page text-hi pb-24">
+      <header className="px-5 pt-12 pb-4 border-b border-rim">
+        <p className="text-xs text-dim uppercase tracking-widest mb-1">Command</p>
         <h1 className="text-xl font-bold">Assignments</h1>
       </header>
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-800">
+      <div className="flex border-b border-rim">
         {(['list', 'create', 'team'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => { setTab(t); setMsg('') }}
             className={`flex-1 py-3 text-sm font-medium capitalize transition ${
-              tab === t ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-500'
+              tab === t ? 'text-blue-400 border-b-2 border-blue-400' : 'text-dim'
             }`}
           >
             {t === 'list' ? `List (${assignments.length})` : t === 'create' ? '+ Create' : `Team (${team.length})`}
@@ -167,7 +165,7 @@ export default function AssignmentsPage() {
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium capitalize transition ${
-                  filter === f ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400'
+                  filter === f ? 'bg-blue-600 text-white' : 'bg-well text-lo'
                 }`}
               >
                 {f.replace('_', ' ')}
@@ -175,7 +173,7 @@ export default function AssignmentsPage() {
             ))}
           </div>
           {filtered.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-12">No assignments yet.</p>
+            <p className="text-dim text-sm text-center py-12">No assignments yet.</p>
           ) : (
             filtered.map(a => (
               <AssignmentCard
@@ -194,38 +192,38 @@ export default function AssignmentsPage() {
       {tab === 'create' && (
         <form onSubmit={handleCreate} className="px-5 py-6 space-y-4">
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">Title *</label>
+            <label className="text-xs text-lo mb-1 block">Title *</label>
             <input
               required value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               placeholder="e.g. Canvass Carlisle Pike north side"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              className="w-full bg-well border border-rim rounded-xl px-4 py-3 text-sm text-hi placeholder-dim focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">Brief / Description</label>
+            <label className="text-xs text-lo mb-1 block">Brief / Description</label>
             <textarea
               value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               placeholder="Mission brief, instructions, context..."
               rows={3}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:border-blue-500"
+              className="w-full bg-well border border-rim rounded-xl px-4 py-3 text-sm text-hi placeholder-dim resize-none focus:outline-none focus:border-blue-500"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Assign To</label>
+              <label className="text-xs text-lo mb-1 block">Assign To</label>
               <select
                 value={form.assigned_to} onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))}
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                className="w-full bg-well border border-rim rounded-xl px-3 py-3 text-sm text-hi focus:outline-none focus:border-blue-500"
               >
                 <option value="">Unassigned</option>
                 {team.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Priority</label>
+              <label className="text-xs text-lo mb-1 block">Priority</label>
               <select
                 value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value as Assignment['priority'] }))}
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-blue-500"
+                className="w-full bg-well border border-rim rounded-xl px-3 py-3 text-sm text-hi focus:outline-none focus:border-blue-500"
               >
                 <option value="low">Low</option>
                 <option value="normal">Normal</option>
@@ -235,15 +233,15 @@ export default function AssignmentsPage() {
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">Due Date</label>
+            <label className="text-xs text-lo mb-1 block">Due Date</label>
             <input
               type="datetime-local" value={form.due_at} onChange={e => setForm(f => ({ ...f, due_at: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500"
+              className="w-full bg-well border border-rim rounded-xl px-4 py-3 text-sm text-hi focus:outline-none focus:border-blue-500"
             />
           </div>
           <button
             type="submit" disabled={saving || !form.title.trim()}
-            className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold py-3 rounded-xl transition mt-2"
+            className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-well disabled:text-dim text-white font-semibold py-3 rounded-xl transition mt-2"
           >
             {saving ? 'Creating…' : 'Create Assignment'}
           </button>
@@ -253,43 +251,43 @@ export default function AssignmentsPage() {
       {/* TEAM */}
       {tab === 'team' && (
         <div className="px-5 py-6 space-y-6">
-          <form onSubmit={handleInvite} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-            <h3 className="font-semibold text-sm">Add Team Member</h3>
+          <form onSubmit={handleInvite} className="bg-card border border-rim rounded-xl p-4 space-y-3">
+            <h3 className="font-semibold text-sm text-hi">Add Team Member</h3>
             <input
               required type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
               placeholder="Email"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              className="w-full bg-well border border-rim rounded-xl px-4 py-3 text-sm text-hi placeholder-dim focus:outline-none focus:border-blue-500"
             />
             <input
               required value={inviteName} onChange={e => setInviteName(e.target.value)}
               placeholder="Full name"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              className="w-full bg-well border border-rim rounded-xl px-4 py-3 text-sm text-hi placeholder-dim focus:outline-none focus:border-blue-500"
             />
             <input
               value={inviteGroup} onChange={e => setInviteGroup(e.target.value)}
               placeholder="Group (A, B, C…)"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              className="w-full bg-well border border-rim rounded-xl px-4 py-3 text-sm text-hi placeholder-dim focus:outline-none focus:border-blue-500"
             />
             <button
               type="submit" disabled={inviting}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white font-semibold py-3 rounded-xl transition"
+              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-well text-white font-semibold py-3 rounded-xl transition"
             >
               {inviting ? 'Adding…' : 'Add Member'}
             </button>
           </form>
 
           {team.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-6">No team members yet.</p>
+            <p className="text-dim text-sm text-center py-6">No team members yet.</p>
           ) : (
             <div className="space-y-2">
-              <h3 className="text-xs text-gray-500 uppercase tracking-widest">Team ({team.length})</h3>
+              <h3 className="text-xs text-dim uppercase tracking-widest">Team ({team.length})</h3>
               {team.map(p => (
-                <div key={p.id} className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex items-center justify-between">
+                <div key={p.id} className="bg-card border border-rim rounded-xl px-4 py-3 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">{p.full_name}</p>
-                    <p className="text-xs text-gray-500 capitalize">{p.role}{p.group_name ? ` · ${p.group_name}` : ''}</p>
+                    <p className="text-sm font-medium text-hi">{p.full_name}</p>
+                    <p className="text-xs text-dim capitalize">{p.role}{p.group_name ? ` · ${p.group_name}` : ''}</p>
                   </div>
-                  <span className={`w-2 h-2 rounded-full ${p.is_active ? 'bg-green-400' : 'bg-gray-600'}`} />
+                  <span className={`w-2 h-2 rounded-full ${p.is_active ? 'bg-green-400' : 'bg-rim2'}`} />
                 </div>
               ))}
             </div>

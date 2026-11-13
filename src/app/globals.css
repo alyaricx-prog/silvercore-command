@@ -1,22 +1,58 @@
 @import "tailwindcss";
 
+/* ── Semantic design tokens ─────────────────────────────────────── */
+@theme inline {
+  --color-page:  var(--sc-page);
+  --color-card:  var(--sc-card);
+  --color-well:  var(--sc-well);
+  --color-rim:   var(--sc-rim);
+  --color-rim2:  var(--sc-rim2);
+  --color-hi:    var(--sc-hi);
+  --color-lo:    var(--sc-lo);
+  --color-dim:   var(--sc-dim);
+}
 
+/* ── Dark theme (default) ───────────────────────────────────────── */
 :root {
-  --background: #030712;
-  --foreground: #f9fafb;
+  --sc-page: #030712;
+  --sc-card: #111827;
+  --sc-well: #1f2937;
+  --sc-rim:  #1f2937;
+  --sc-rim2: #374151;
+  --sc-hi:   #f9fafb;
+  --sc-lo:   #9ca3af;
+  --sc-dim:  #6b7280;
+}
+
+/* ── Light theme ────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --sc-page: #f1f5f9;
+  --sc-card: #ffffff;
+  --sc-well: #f8fafc;
+  --sc-rim:  #e2e8f0;
+  --sc-rim2: #cbd5e1;
+  --sc-hi:   #0f172a;
+  --sc-lo:   #64748b;
+  --sc-dim:  #94a3b8;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--sc-page);
+  color: var(--sc-hi);
   font-family: ui-sans-serif, system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Leaflet dark-mode fixes */
+/* ── Leaflet fixes ──────────────────────────────────────────────── */
 .leaflet-container {
   background: #111827;
 }
 .leaflet-tile-pane {
   filter: brightness(0.85) saturate(0.9);
+}
+[data-theme="light"] .leaflet-tile-pane {
+  filter: none;
+}
+[data-theme="light"] .leaflet-container {
+  background: #e2e8f0;
 }

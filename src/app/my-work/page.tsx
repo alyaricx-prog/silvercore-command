@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import AssignmentCard from '@/components/AssignmentCard'
 import QuickLogModal from '@/components/QuickLogModal'
+import CheckInModal from '@/components/CheckInModal'
 import type { Profile, Assignment, DealLog } from '@/lib/types'
 
 export default function MyWorkPage() {
@@ -13,6 +14,7 @@ export default function MyWorkPage() {
   const [filter, setFilter] = useState<string>('open')
   const [loading, setLoading] = useState(true)
   const [logTarget, setLogTarget] = useState<string | null>(null)
+  const [checkInTarget, setCheckInTarget] = useState<string | null>(null)
   const [toast, setToast] = useState('')
   const router = useRouter()
   const supabase = createClient()
@@ -59,6 +61,29 @@ export default function MyWorkPage() {
     showToast('Deal logged ✓')
   }
 
+  async function handleCheckIn(data: { note: string; lat: number | null; lng: number | null }) {
+    if (!profile || !checkInTarget) return
+    const { error } = await supabase.from('check_ins').insert({
+      organisation_id: profile.organisation_id,
+      assignment_id: checkInTarget,
+      employee_id: profile.id,
+      note: data.note || null,
+      lat: data.lat,
+      lng: data.lng,
+    })
+    setCheckInTarget(null)
+    if (error) {
+      showToast('Check-in failed — try again')
+    } else {
+      // Auto-advance status to in_progress if still pending/acknowledged
+      const target = assignments.find(a => a.id === checkInTarget)
+      if (target && (target.status === 'pending' || target.status === 'acknowledged')) {
+        handleStatusChange(checkInTarget, 'in_progress')
+      }
+      showToast('Checked in ✓')
+    }
+  }
+
   function showToast(msg: string) {
     setToast(msg)
     setTimeout(() => setToast(''), 3000)
@@ -70,21 +95,21 @@ export default function MyWorkPage() {
     : assignments.filter(a => a.status === 'completed' || a.status === 'cancelled')
 
   if (loading) return (
-    <main className="min-h-screen bg-gray-950 flex items-center justify-center">
+    <main className="min-h-screen bg-page flex items-center justify-center">
       <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
     </main>
   )
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white pb-24">
-      <header className="px-5 pt-12 pb-4 border-b border-gray-800">
-        <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Field</p>
+    <main className="min-h-screen bg-page text-hi pb-24">
+      <header className="px-5 pt-12 pb-4 border-b border-rim">
+        <p className="text-xs text-dim uppercase tracking-widest mb-1">Field</p>
         <h1 className="text-xl font-bold">My Work</h1>
-        {profile && <p className="text-xs text-gray-500 mt-0.5">{profile.full_name}{profile.group_name ? ` · Group ${profile.group_name}` : ''}</p>}
+        {profile && <p className="text-xs text-dim mt-0.5">{profile.full_name}{profile.group_name ? ` · Group ${profile.group_name}` : ''}</p>}
       </header>
 
       {/* Filter toggle */}
-      <div className="flex border-b border-gray-800">
+      <div className="flex border-b border-rim">
         {[
           { key: 'open', label: `Open (${assignments.filter(a => open.includes(a.status)).length})` },
           { key: 'done', label: `Done (${assignments.filter(a => a.status === 'completed').length})` },
@@ -93,7 +118,7 @@ export default function MyWorkPage() {
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`flex-1 py-3 text-sm font-medium transition ${
-              filter === f.key ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-500'
+              filter === f.key ? 'text-blue-400 border-b-2 border-blue-400' : 'text-dim'
             }`}
           >
             {f.label}
@@ -105,7 +130,7 @@ export default function MyWorkPage() {
         {filtered.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-4xl mb-3">{filter === 'open' ? '🎯' : '✅'}</p>
-            <p className="text-gray-500 text-sm">
+            <p className="text-dim text-sm">
               {filter === 'open' ? 'No open assignments.' : 'No completed assignments yet.'}
             </p>
           </div>
@@ -117,6 +142,7 @@ export default function MyWorkPage() {
               assignee={profile}
               onStatusChange={handleStatusChange}
               onLogDeal={id => setLogTarget(id)}
+              onCheckIn={id => setCheckInTarget(id)}
               isEmployee={true}
             />
           ))
@@ -128,6 +154,14 @@ export default function MyWorkPage() {
           assignmentId={logTarget}
           onSubmit={handleLogDeal}
           onClose={() => setLogTarget(null)}
+        />
+      )}
+
+      {checkInTarget && (
+        <CheckInModal
+          assignmentTitle={assignments.find(a => a.id === checkInTarget)?.title ?? ''}
+          onSubmit={handleCheckIn}
+          onClose={() => setCheckInTarget(null)}
         />
       )}
 

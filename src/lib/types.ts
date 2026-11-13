@@ -46,3 +46,14 @@ export type DealLog = {
   lng: number
   created_at: string
 }
+
+export type CheckIn = {
+  id: string
+  organisation_id: string
+  assignment_id: string
+  employee_id: string
+  note: string | null
+  lat: number | null
+  lng: number | null
+  created_at: string
+}
