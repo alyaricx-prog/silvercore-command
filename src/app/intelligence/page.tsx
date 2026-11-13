@@ -223,6 +223,20 @@ export default function IntelligencePage() {
           <p className="text-xs text-dim text-center">
             Showing field activity from your {teamSize} team member{teamSize !== 1 ? 's' : ''}.
           </p>
+
+          {/* Export weekly report */}
+          <div className="bg-card border border-rim rounded-xl p-4">
+            <h2 className="text-xs text-dim uppercase tracking-widest mb-2">Export</h2>
+            <p className="text-xs text-dim mb-3">Generate a printable HTML report for the last 7 days. Open it in your browser and use ⌘P / Print → Save as PDF.</p>
+            <a
+              href={`/api/weekly-report?org_id=${profile?.organisation_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition text-sm"
+            >
+              📊 Export Weekly Report
+            </a>
+          </div>
         </div>
       )}
 

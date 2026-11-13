@@ -47,6 +47,66 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
+// ── EditLogForm ──────────────────────────────────────────────
+const OUTCOMES: DealLog['outcome'][] = ['closed', 'lost', 'follow_up', 'no_contact']
+const OUTCOME_LABELS_EDIT: Record<DealLog['outcome'], string> = {
+  closed: '✅ Closed', lost: '❌ Lost', follow_up: '🔁 Follow Up', no_contact: '🚫 No Contact',
+}
+
+function EditLogForm({ log, saving, onSave, onDelete, onCancel }: {
+  log: DealLog
+  saving: boolean
+  onSave: (outcome: DealLog['outcome'], notes: string) => void
+  onDelete: () => void
+  onCancel: () => void
+}) {
+  const [outcome, setOutcome] = useState<DealLog['outcome']>(log.outcome)
+  const [notes, setNotes] = useState(log.notes || '')
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="text-xs font-medium text-dim uppercase tracking-widest block mb-2">Outcome</label>
+        <div className="grid grid-cols-2 gap-2">
+          {OUTCOMES.map(o => (
+            <button key={o} onClick={() => setOutcome(o)}
+              className="rounded-xl py-2.5 text-sm font-medium transition-all border"
+              style={{
+                background: outcome === o ? 'var(--sc-well)' : 'transparent',
+                borderColor: outcome === o ? 'rgba(255,255,255,0.2)' : 'var(--sc-rim)',
+                color: outcome === o ? 'var(--sc-hi)' : 'var(--sc-dim)',
+              }}>
+              {OUTCOME_LABELS_EDIT[o]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label className="text-xs font-medium text-dim uppercase tracking-widest block mb-2">Notes</label>
+        <textarea
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          rows={3}
+          className="w-full rounded-xl px-3 py-2.5 text-sm border outline-none resize-none"
+          style={{ background: 'var(--sc-well)', borderColor: 'var(--sc-rim)', color: 'var(--sc-hi)' }}
+          placeholder="Add context…"
+        />
+      </div>
+      <div className="flex gap-2 pt-1">
+        <button onClick={() => onSave(outcome, notes)} disabled={saving}
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity disabled:opacity-50"
+          style={{ background: 'var(--sc-blue)' }}>
+          {saving ? 'Saving…' : 'Save changes'}
+        </button>
+        <button onClick={onDelete}
+          className="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors">
+          Delete
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function MapPage() {
   const [profile, setProfile]   = useState<Profile | null>(null)
   const [logs, setLogs]         = useState<DealLog[]>([])
@@ -148,6 +208,24 @@ export default function MapPage() {
 
     return () => { supabase.removeChannel(channel) }
   }, [loading])
+
+  const [editLog, setEditLog]   = useState<DealLog | null>(null)
+  const [editSaving, setEditSaving] = useState(false)
+
+  async function saveEdit(outcome: DealLog['outcome'], notes: string) {
+    if (!editLog) return
+    setEditSaving(true)
+    await supabase.from('deal_logs').update({ outcome, notes }).eq('id', editLog.id)
+    setLogs(prev => prev.map(l => l.id === editLog.id ? { ...l, outcome, notes } : l))
+    setEditLog(null)
+    setEditSaving(false)
+  }
+
+  async function deleteLog(id: string) {
+    if (!confirm('Delete this deal log? This cannot be undone.')) return
+    await supabase.from('deal_logs').delete().eq('id', id)
+    setLogs(prev => prev.filter(l => l.id !== id))
+  }
 
   const pinned  = logs.filter(l => l.lat && l.lng)
   const feed    = pinned.slice(0, 30)   // most recent 30 for the sheet
@@ -328,6 +406,13 @@ export default function MapPage() {
                   {log.notes && <p className="text-xs text-dim truncate mt-0.5">{log.notes}</p>}
                 </div>
                 <span className="text-xs text-dim shrink-0 ml-2">{timeAgo(log.created_at)}</span>
+                {profile?.role !== 'employee' && (
+                  <button
+                    onClick={() => setEditLog(log)}
+                    className="shrink-0 text-xs text-dim hover:text-blue-400 transition-colors px-1"
+                    title="Edit"
+                  >✏️</button>
+                )}
               </div>
             )
           })}
@@ -335,6 +420,29 @@ export default function MapPage() {
       </div>
 
       <Nav role={profile!.role} />
+
+      {/* ── Edit Deal Log Modal ───────────────────────────────── */}
+      {editLog && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center"
+             style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+             onClick={e => { if (e.target === e.currentTarget) setEditLog(null) }}>
+          <div className="w-full max-w-lg rounded-t-3xl p-6 pb-10 sc-enter"
+               style={{ background: 'var(--sc-card)', color: 'var(--sc-hi)' }}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-semibold">Edit Deal Log</h2>
+              <button onClick={() => setEditLog(null)} className="text-dim hover:text-hi w-8 h-8 flex items-center justify-center rounded-xl"
+                style={{ background: 'var(--sc-well)' }}>✕</button>
+            </div>
+            <EditLogForm
+              log={editLog}
+              saving={editSaving}
+              onSave={saveEdit}
+              onDelete={() => { deleteLog(editLog.id); setEditLog(null) }}
+              onCancel={() => setEditLog(null)}
+            />
+          </div>
+        </div>
+      )}
     </main>
   )
 }
