@@ -81,6 +81,20 @@ export default function AssignmentsPage() {
       setForm({ title: '', description: '', assigned_to: '', priority: 'normal', due_at: '' })
       setTab('list')
       setMsg('Assignment created.')
+      // Fire-and-forget push notification to the team
+      fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-push`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          organisation_id: profile.organisation_id,
+          title: 'New Assignment',
+          body: data.title,
+          url: '/my-work',
+        }),
+      }).catch(() => {}) // ignore push errors
     }
     setSaving(false)
   }

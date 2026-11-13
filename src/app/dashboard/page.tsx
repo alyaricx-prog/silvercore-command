@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import PageSkeleton from '@/components/Skeleton'
 import type { Profile, Assignment } from '@/lib/types'
+import { usePushSubscription } from '@/lib/usePushSubscription'
 
 export default function DashboardPage() {
   const [profile,     setProfile]     = useState<Profile | null>(null)
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [loading,     setLoading]     = useState(true)
   const router  = useRouter()
+  usePushSubscription((profile as any)?.organisation_id ?? null)
   const supabase = createClient()
 
   useEffect(() => {
