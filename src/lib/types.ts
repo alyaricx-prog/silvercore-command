@@ -166,3 +166,28 @@ export type AuditEvent = {
   detail: Record<string, unknown> | null
   created_at: string
 }
+
+export type Reminder = {
+  id: string
+  organisation_id: string
+  created_by: string | null
+  assigned_to: string | null
+  assignment_id: string | null
+  title: string
+  body: string | null
+  remind_at: string
+  sent: boolean
+  created_at: string
+}
+
+export type Document = {
+  id: string
+  organisation_id: string
+  assignment_id: string | null
+  uploaded_by: string | null
+  name: string
+  file_path: string
+  mime_type: string | null
+  size_bytes: number | null
+  created_at: string
+}

@@ -45,6 +45,23 @@ const TrophyIcon = () => (
   </svg>
 )
 
+
+const BellIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+  </svg>
+)
+const FolderIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h3.586a1 1 0 01.707.293L10.414 6.3A1 1 0 0011.121 6H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+  </svg>
+)
+const RouteIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+    <circle cx="6" cy="19" r="2" /><circle cx="18" cy="5" r="2" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 17V9a6 6 0 0112 0v8" />
+  </svg>
+)
 type NavProps = { role: Role }
 
 type NavLink = { href: string; label: string; icon: React.ReactNode }
@@ -61,14 +78,19 @@ export default function Nav({ role }: NavProps) {
         { href: '/customers',    label: 'Customers', icon: <UsersIcon /> },
         { href: '/intelligence', label: 'Intel',     icon: <ChartIcon /> },
         { href: '/goals',        label: 'Goals',     icon: <TrophyIcon /> },
+        { href: '/reminders',    label: 'Remind',    icon: <BellIcon /> },
+        { href: '/vault',        label: 'Vault',     icon: <FolderIcon /> },
         { href: '/settings',     label: 'Settings',  icon: <GearIcon /> },
       ]
     : [
         { href: '/dashboard', label: 'Home',     icon: <HomeIcon /> },
         { href: '/my-work',   label: 'My Work',  icon: <BriefcaseIcon /> },
         { href: '/map',       label: 'Map',      icon: <MapIcon /> },
+        { href: '/route',     label: 'Route',    icon: <RouteIcon /> },
         { href: '/customers', label: 'Customers',icon: <UsersIcon /> },
         { href: '/goals',     label: 'Goals',    icon: <TrophyIcon /> },
+        { href: '/reminders', label: 'Remind',   icon: <BellIcon /> },
+        { href: '/vault',     label: 'Vault',    icon: <FolderIcon /> },
         { href: '/settings',  label: 'Settings', icon: <GearIcon /> },
       ]
 

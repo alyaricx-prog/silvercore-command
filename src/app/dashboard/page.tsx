@@ -102,6 +102,8 @@ export default function DashboardPage() {
               <QuickLink href="/customers" title="Customers" subtitle="CRM & timelines" icon="👥" />
               <QuickLink href="/intelligence" title="Intelligence" subtitle="Reports & contracts" icon="📊" />
               <QuickLink href="/goals" title="Goals & Badges" subtitle="Team performance" icon="🏆" />
+              <QuickLink href="/reminders" title="Reminders" subtitle="Upcoming alerts" icon="⏰" />
+              <QuickLink href="/vault" title="Document Vault" subtitle="Files & uploads" icon="📁" />
             </>
           ) : (
             <>
@@ -112,8 +114,11 @@ export default function DashboardPage() {
                 icon="💼"
               />
               <QuickLink href="/map" title="Deal Map" subtitle="Team activity" icon="🗺" />
+              <QuickLink href="/route" title="Route Planner" subtitle="Plan your day" icon="🧭" />
               <QuickLink href="/customers" title="Customers" subtitle="Your contacts" icon="👥" />
               <QuickLink href="/goals" title="Goals & Badges" subtitle="Your progress" icon="🏆" />
+              <QuickLink href="/reminders" title="Reminders" subtitle="Upcoming alerts" icon="⏰" />
+              <QuickLink href="/vault" title="Document Vault" subtitle="Field resources" icon="📁" />
             </>
           )}
         </div>
