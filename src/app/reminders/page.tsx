@@ -67,22 +67,20 @@ export default function RemindersPage() {
       setProfile(prof)
       const isHost = prof.role === 'host' || prof.role === 'cohost'
 
-      const queries: Promise<any>[] = [
-        supabase.from('reminders').select('*')
-          .eq('organisation_id', prof.organisation_id)
-          .order('remind_at', { ascending: true }),
-      ]
+      const remRes = await supabase.from('reminders').select('*')
+        .eq('organisation_id', prof.organisation_id)
+        .order('remind_at', { ascending: true })
+      setReminders(remRes?.data || [])
+
       if (isHost) {
-        queries.push(
+        const [profRes, assRes] = await Promise.all([
           supabase.from('profiles').select('*').eq('organisation_id', prof.organisation_id),
           supabase.from('assignments').select('*')
-            .eq('organisation_id', prof.organisation_id).eq('status', 'open').limit(100),
-        )
+            .eq('organisation_id', prof.organisation_id).limit(100),
+        ])
+        setProfiles(profRes.data || [])
+        setAssignments(assRes.data || [])
       }
-      const [remRes, profRes, assRes] = await Promise.all(queries) as any[]
-      setReminders(remRes?.data || [])
-      if (profRes) setProfiles(profRes.data || [])
-      if (assRes) setAssignments(assRes.data || [])
       setLoading(false)
     }
     load()
