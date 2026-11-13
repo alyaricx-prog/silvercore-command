@@ -1,8 +1,10 @@
+import "leaflet/dist/leaflet.css"
 'use client'
+import { useEffect } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import type { DealLog, Profile } from '@/lib/types'
 
-// Camp Hill, PA center
+// Camp Hill, PA
 const CENTER: [number, number] = [40.2426, -76.9227]
 
 const OUTCOME_COLORS: Record<string, string> = {
@@ -52,13 +54,13 @@ export default function MapView({ logs, profiles }: Props) {
           }}
         >
           <Popup>
-            <div className="text-sm space-y-1">
-              <div className="font-semibold">{OUTCOME_LABELS[log.outcome]}</div>
-              {log.notes && <div className="text-gray-600">{log.notes}</div>}
-              <div className="text-gray-400 text-xs">
+            <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+              <div style={{ fontWeight: 600 }}>{OUTCOME_LABELS[log.outcome]}</div>
+              {log.notes && <div style={{ color: '#666' }}>{log.notes}</div>}
+              <div style={{ color: '#999', fontSize: 11 }}>
                 {profileMap[log.logged_by]?.full_name || 'Unknown'}
               </div>
-              <div className="text-gray-400 text-xs">
+              <div style={{ color: '#999', fontSize: 11 }}>
                 {new Date(log.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
               </div>
             </div>
