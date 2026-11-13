@@ -8,6 +8,7 @@ import AssignmentCard from '@/components/AssignmentCard'
 import QuickLogModal from '@/components/QuickLogModal'
 import CheckInModal from '@/components/CheckInModal'
 import type { Profile, Assignment, DealLog } from '@/lib/types'
+import { sendPush } from '@/lib/sendPush'
 
 export default function MyWorkPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -60,6 +61,16 @@ export default function MyWorkPage() {
     })
     setLogTarget(null)
     showToast('Deal logged ✓')
+
+    // Notify the team on wins and losses — those are the moments worth a ping
+    if (data.outcome === 'closed' || data.outcome === 'lost') {
+      sendPush({
+        organisation_id: profile.organisation_id,
+        title: data.outcome === 'closed' ? '🎉 Deal Closed' : 'Deal Lost',
+        body: `${profile.full_name}${data.notes ? ` — ${data.notes}` : ''}`,
+        url: '/map',
+      })
+    }
   }
 
   async function handleCheckIn(data: { note: string; lat: number | null; lng: number | null }) {

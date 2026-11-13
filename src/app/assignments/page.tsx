@@ -6,6 +6,7 @@ import Nav from '@/components/Nav'
 import PageSkeleton from '@/components/Skeleton'
 import AssignmentCard from '@/components/AssignmentCard'
 import type { Profile, Assignment } from '@/lib/types'
+import { sendPush } from '@/lib/sendPush'
 
 type Tab = 'list' | 'create' | 'team'
 
@@ -82,19 +83,12 @@ export default function AssignmentsPage() {
       setTab('list')
       setMsg('Assignment created.')
       // Fire-and-forget push notification to the team
-      fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-push`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          organisation_id: profile.organisation_id,
-          title: 'New Assignment',
-          body: data.title,
-          url: '/my-work',
-        }),
-      }).catch(() => {}) // ignore push errors
+      sendPush({
+        organisation_id: profile.organisation_id,
+        title: 'New Assignment',
+        body: data.title,
+        url: '/my-work',
+      })
     }
     setSaving(false)
   }
@@ -110,27 +104,23 @@ export default function AssignmentsPage() {
     setInviting(true)
     setMsg('')
     const tempPw = Math.random().toString(36).slice(2) + 'Aa1!'
-    const { data: authData, error: authErr } = await supabase.auth.signUp({
-      email: inviteEmail.trim(),
-      password: tempPw,
-      options: { data: { full_name: inviteName.trim() } }
-    })
-    if (authErr) { setMsg('Error: ' + authErr.message); setInviting(false); return }
-    if (authData.user) {
-      const { error: profErr } = await supabase.rpc('create_employee_profile', {
-        user_id: authData.user.id,
+    const res = await fetch('/api/create-employee', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: inviteEmail.trim(),
+        password: tempPw,
+        full_name: inviteName.trim(),
         org_id: profile.organisation_id,
-        p_full_name: inviteName.trim(),
-        p_group_name: inviteGroup.trim() || 'A',
-      })
-      if (profErr) { setMsg('Auth OK but profile error: ' + profErr.message) }
-      else {
-        const { data: newProf } = await supabase.from('profiles').select('*').eq('id', authData.user.id).single()
-        if (newProf) setTeam(prev => [...prev, newProf])
-        setMsg(`Team member added. Temp password: ${tempPw} — share with them to log in.`)
-        setInviteEmail(''); setInviteName(''); setInviteGroup('')
-      }
-    }
+        group_name: inviteGroup.trim() || 'A',
+      }),
+    })
+    const json = await res.json()
+    if (!res.ok) { setMsg('Error: ' + json.error); setInviting(false); return }
+    const { data: newProf } = await supabase.from('profiles').select('*').eq('id', json.user.id).single()
+    if (newProf) setTeam(prev => [...prev, newProf])
+    setMsg(`Team member added. Temp password: ${tempPw} — share with them to log in.`)
+    setInviteEmail(''); setInviteName(''); setInviteGroup('')
     setInviting(false)
   }
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import PageSkeleton from '@/components/Skeleton'
 import { useTheme, type Theme } from '@/providers/ThemeProvider'
+import { usePushToggle } from '@/lib/usePushSubscription'
 import type { Profile } from '@/lib/types'
 
 const THEME_OPTIONS: { value: Theme; label: string; icon: string; desc: string }[] = [
@@ -24,6 +25,7 @@ export default function SettingsPage() {
   const [pwSaving, setPwSaving]   = useState(false)
   const [pwMsg, setPwMsg]         = useState('')
   const { theme, setTheme }       = useTheme()
+  const push                       = usePushToggle(profile?.organisation_id ?? null)
   const router                    = useRouter()
   const supabase                  = createClient()
 
@@ -155,6 +157,36 @@ export default function SettingsPage() {
                   <span className="text-[10px] text-dim">{opt.desc}</span>
                 </button>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Notifications ─────────────────────────────────── */}
+        <section className="space-y-4">
+          <h2 className="text-xs font-semibold text-dim uppercase tracking-widest">Notifications</h2>
+          <div className="bg-card border border-rim rounded-2xl p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-medium">Push notifications</p>
+                <p className="text-xs text-dim mt-0.5">
+                  {push.status === 'unsupported' && 'Not supported on this device/browser.'}
+                  {push.status === 'denied' && 'Blocked — enable in your browser/phone settings.'}
+                  {push.status === 'enabled' && 'New assignments and deal outcomes will alert you.'}
+                  {push.status === 'disabled' && 'Get alerted on new assignments and deal outcomes.'}
+                </p>
+              </div>
+              <button
+                onClick={() => push.status === 'enabled' ? push.disable() : push.enable()}
+                disabled={push.busy || push.status === 'unsupported' || push.status === 'denied'}
+                className={`shrink-0 relative w-12 h-7 rounded-full transition-colors disabled:opacity-40 ${
+                  push.status === 'enabled' ? 'bg-blue-600' : 'bg-rim2'
+                }`}
+              >
+                <span
+                  className="absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform shadow"
+                  style={{ transform: push.status === 'enabled' ? 'translateX(20px)' : 'translateX(0)' }}
+                />
+              </button>
             </div>
           </div>
         </section>
