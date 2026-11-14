@@ -183,29 +183,29 @@ export default function SettingsPage() {
         </section>
 
         {/* ── Appearance ────────────────────────────────────── */}
-        <section className="space-y-4">
-          <h2 className="text-xs font-semibold text-dim uppercase tracking-widest">Appearance</h2>
-          <div className="bg-card border border-rim rounded-2xl p-4 space-y-3">
-            <p className="text-sm font-medium">Theme</p>
-            <div className="grid grid-cols-3 gap-2">
-              {THEME_OPTIONS.map(opt => (
+        <section>
+          <h2 className="sc-section-label mb-3">Appearance</h2>
+          <div className="grid grid-cols-3 gap-2.5">
+            {THEME_OPTIONS.map(opt => {
+              const active = theme === opt.value
+              return (
                 <button
                   key={opt.value}
                   onClick={() => setTheme(opt.value)}
-                  className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition ${
-                    theme === opt.value
-                      ? 'border-blue-500 bg-blue-600/10'
-                      : 'border-rim bg-well'
-                  }`}
+                  className="sc-stat-tile flex flex-col items-center gap-1.5 py-4 transition-all"
+                  style={active ? {
+                    borderColor: 'var(--sc-brand)',
+                    background: 'var(--sc-brand-dim)',
+                  } : undefined}
                 >
-                  <span className="text-xl">{opt.icon}</span>
-                  <span className={`text-xs font-medium ${theme === opt.value ? 'text-blue-400' : 'text-lo'}`}>
+                  <span className="text-2xl">{opt.icon}</span>
+                  <span className="text-xs font-bold" style={active ? { color: 'var(--sc-brand)' } : { color: 'var(--sc-lo)' }}>
                     {opt.label}
                   </span>
                   <span className="text-[10px] text-dim">{opt.desc}</span>
                 </button>
-              ))}
-            </div>
+              )
+            })}
           </div>
         </section>
 

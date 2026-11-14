@@ -32,18 +32,19 @@
 
 /* ── Light theme ────────────────────────────────────────────────── */
 [data-theme="light"] {
-  --sc-page: #f0f4fb;
+  --sc-page: #f5f5f7;
   --sc-card: #ffffff;
-  --sc-well: #f8faff;
-  --sc-rim:  #dde4f0;
-  --sc-rim2: #c5d0e4;
-  --sc-hi:   #0a1628;
-  --sc-lo:   #3d5478;
-  --sc-dim:  #6079a0;
+  --sc-well: #f0f0f5;
+  --sc-rim:  #e0e0ea;
+  --sc-rim2: #c8c8d8;
+  --sc-hi:   #0a0a14;
+  --sc-lo:   #38385a;
+  --sc-dim:  #80809a;
   --sc-brand: #2563eb;
   --sc-brand-dim: rgba(37,99,235,0.1);
   --sc-brand-glow: rgba(37,99,235,0.2);
 
+  /* Remap dark-tuned palette steps for readability on white */
   --color-blue-300: #1d4ed8;   --color-blue-400: #2563eb;   --color-blue-900: #bfdbfe;
   --color-green-300: #15803d;  --color-green-400: #16a34a;  --color-green-900: #bbf7d0;
   --color-red-300: #b91c1c;    --color-red-400: #dc2626;    --color-red-800: #fca5a5;  --color-red-900: #fecaca;
@@ -52,6 +53,20 @@
   --color-purple-300: #7e22ce; --color-purple-400: #9333ea; --color-purple-900: #e9d5ff;
   --color-gray-300: #374151;   --color-gray-600: #9ca3af;   --color-gray-700: #e5e7eb;
 }
+
+/* Light-mode overrides for utilities that assume a dark surface */
+[data-theme="light"] .sc-feed-item {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+[data-theme="light"] .sc-stat-tile {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+[data-theme="light"] .sc-badge-green  { background: rgba(22,163,74,0.12);  color: #15803d; }
+[data-theme="light"] .sc-badge-blue   { background: rgba(37,99,235,0.1);   color: #1d4ed8; }
+[data-theme="light"] .sc-badge-purple { background: rgba(126,34,206,0.1);  color: #7e22ce; }
+[data-theme="light"] .sc-badge-amber  { background: rgba(180,83,9,0.1);    color: #b45309; }
+[data-theme="light"] .sc-badge-gray   { background: rgba(100,116,139,0.1); color: #475569; }
+[data-theme="light"] .sc-badge-red    { background: rgba(185,28,28,0.1);   color: #b91c1c; }
 
 body {
   background: var(--sc-page);

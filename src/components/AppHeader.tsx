@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useTheme } from '@/providers/ThemeProvider'
 import type { Organisation } from '@/lib/types'
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 export default function AppHeader({ organisationId, eyebrow, title, subtitle, right }: Props) {
   const [org, setOrg] = useState<Organisation | null>(null)
   const supabase = createClient()
+  const { resolvedTheme, setTheme } = useTheme()
 
   useEffect(() => {
     if (!organisationId) return
@@ -75,7 +77,28 @@ export default function AppHeader({ organisationId, eyebrow, title, subtitle, ri
           </div>
         </div>
 
-        {right && <div className="shrink-0">{right}</div>}
+        <div className="shrink-0 flex items-center gap-2">
+          {right}
+          {/* Theme toggle */}
+          <button
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            aria-label="Toggle theme"
+            className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+            style={{ background: 'rgba(var(--sc-brand-rgb,59,130,246),0.1)', color: 'var(--sc-brand)' }}
+          >
+            {resolvedTheme === 'dark' ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Accent line — brand gradient left-to-right */}
