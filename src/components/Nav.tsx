@@ -61,14 +61,14 @@ export default function Nav({ role }: NavProps) {
   const links: NavLink[] = isHost
     ? [
         { href: '/map',         label: 'Map',      icon: <MapIcon /> },
-        { href: '/missions',    label: 'Missions', icon: <MissionsIcon /> },
-        { href: '/team',        label: 'Team',     icon: <TeamIcon /> },
+        { href: '/assignments', label: 'Missions', icon: <MissionsIcon /> },
+        { href: '/customers',   label: 'Team',     icon: <TeamIcon /> },
         { href: '/intelligence',label: 'Intel',    icon: <IntelIcon /> },
       ]
     : [
         { href: '/map',         label: 'Map',      icon: <MapIcon /> },
         { href: '/my-work',     label: 'My Work',  icon: <MyWorkIcon /> },
-        { href: '/team',        label: 'Team',     icon: <TeamIcon /> },
+        { href: '/customers',   label: 'Team',     icon: <TeamIcon /> },
         { href: '/intelligence',label: 'Intel',    icon: <IntelIcon /> },
       ]
 
@@ -76,12 +76,13 @@ export default function Nav({ role }: NavProps) {
     <nav className="fixed bottom-0 left-0 right-0 z-50 sc-glass border-t border-rim pb-safe">
       <div className="flex items-stretch h-[3.75rem]">
         {links.map(link => {
-          // Treat /missions as active for /assignments, /goals, /simulation
+          // Missions tab (href=/assignments) stays active for /goals and /simulation too
           const missionsRoutes = ['/assignments', '/goals', '/simulation']
+          const isMissionsTab = link.href === '/assignments' && link.label === 'Missions'
           const active =
             path === link.href ||
             path.startsWith(link.href + '/') ||
-            (link.href === '/missions' && missionsRoutes.some(r => path.startsWith(r)))
+            (isMissionsTab && missionsRoutes.some(r => path.startsWith(r)))
 
           return (
             <Link
