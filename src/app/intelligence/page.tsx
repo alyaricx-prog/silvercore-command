@@ -516,9 +516,10 @@ export default function IntelligencePage() {
       {tab === 'pulse' && (() => {
         const MIN_RESPONSES = 5
         // Group by group_name or 'All Reps'
+        // PulseEntry has no group_name — all entries bucket under 'All Reps'
         const byGroup: Record<string, { scores: number[]; notes: string[] }> = {}
         pulseEntries.forEach(p => {
-          const g = p.group_name || 'All Reps'
+          const g = 'All Reps'
           if (!byGroup[g]) byGroup[g] = { scores: [], notes: [] }
           byGroup[g].scores.push(p.score)
           if (p.note) byGroup[g].notes.push(p.note)

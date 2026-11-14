@@ -266,10 +266,11 @@ export default function DashboardPage() {
             items.push({ id:a.id, kind:'assignment', title:a.title, subtitle:a.address||'No address', ts:a.created_at, color, icon:'📋', badge, badgeColor:color, href:'/assignments' })
           })
           dealLogs.slice(0,10).forEach(d => {
-            const color = d.outcome==='won'?'#4ade80':d.outcome==='lost'?'#f87171':d.outcome==='followup'?'#38bdf8':'#fbbf24'
-            const icon  = d.outcome==='won'?'💼':d.outcome==='lost'?'⚠️':d.outcome==='followup'?'🔄':'📝'
-            const badge = d.outcome==='won'?'Won':d.outcome==='lost'?'Lost':d.outcome==='followup'?'Follow-up':'No Answer'
-            items.push({ id:d.id, kind:'deal', title:d.address||'Deal logged', subtitle:d.notes||'No notes', ts:d.created_at, color, icon, badge, badgeColor:color, href:'/deals' })
+            const color = d.outcome==='closed'?'#4ade80':d.outcome==='lost'?'#f87171':d.outcome==='follow_up'?'#38bdf8':'#fbbf24'
+            const icon  = d.outcome==='closed'?'💼':d.outcome==='lost'?'⚠️':d.outcome==='follow_up'?'🔄':'📝'
+            const badge = d.outcome==='closed'?'Closed':d.outcome==='lost'?'Lost':d.outcome==='follow_up'?'Follow-up':'No Contact'
+            const subtitle = d.notes || `${d.lat.toFixed(4)}, ${d.lng.toFixed(4)}`
+            items.push({ id:d.id, kind:'deal', title:'Deal logged', subtitle, ts:d.created_at, color, icon, badge, badgeColor:color, href:'/intelligence' })
           })
           items.sort((a,b) => new Date(b.ts).getTime()-new Date(a.ts).getTime())
           const recent = items.slice(0,8)
