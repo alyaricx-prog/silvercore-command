@@ -37,7 +37,7 @@ export default function OnboardPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
       const { data: prof } = await supabase.from('profiles').select('id').eq('id', user.id).single()
-      if (prof) { router.push('/dashboard'); return }
+      if (prof) { router.push('/map'); return }
       setUserId(user.id)
       const meta = user.user_metadata as { full_name?: string }
       if (meta?.full_name) setFullName(meta.full_name)
@@ -198,7 +198,7 @@ export default function OnboardPage() {
                 ))}
               </div>
             </div>
-            <button onClick={() => router.push('/dashboard')}
+            <button onClick={() => router.push('/map')}
               className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl py-3 text-sm transition">
               Go to dashboard →
             </button>
