@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
+import AppHeader from '@/components/AppHeader'
 import PageSkeleton from '@/components/Skeleton'
 import type { Profile, Contract, AuditEvent, DealLog , PulseEntry, FrictionReport, TrainingNote, Announcement } from '@/lib/types'
 

@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
+import AppHeader from '@/components/AppHeader'
 import Link from 'next/link'
 
 import PageSkeleton from '@/components/Skeleton'
 import { useTheme, type Theme } from '@/providers/ThemeProvider'
 import { usePushToggle } from '@/lib/usePushSubscription'
-import type { Profile } from '@/lib/types'
+import type { Profile, Organisation } from '@/lib/types'
 
 const THEME_OPTIONS: { value: Theme; label: string; icon: string; desc: string }[] = [
   { value: 'dark',   label: 'Dark',   icon: '🌙', desc: 'Always dark' },
@@ -30,6 +31,13 @@ export default function SettingsPage() {
   const push                       = usePushToggle(profile?.organisation_id ?? null)
   const router                    = useRouter()
   const supabase                  = createClient()
+  const [org, setOrg]             = useState<Organisation | null>(null)
+  const [brandColor, setBrandColor] = useState('#3b82f6')
+  const [displayName, setDisplayName] = useState('')
+  const [logoFile, setLogoFile]   = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [brandSaving, setBrandSaving] = useState(false)
+  const [brandMsg, setBrandMsg]   = useState('')
 
   useEffect(() => {
     async function load() {
@@ -40,6 +48,14 @@ export default function SettingsPage() {
       setProfile(prof)
       setName(prof.full_name)
       setGroup(prof.group_name || '')
+      // Load org branding
+      const { data: orgData } = await supabase.from('organisations').select('*').eq('id', prof.organisation_id).single()
+      if (orgData) {
+        setOrg(orgData as Organisation)
+        setBrandColor(orgData.brand_color || '#3b82f6')
+        setDisplayName(orgData.company_display_name || '')
+        if (orgData.logo_url) setLogoPreview(orgData.logo_url)
+      }
       setLoading(false)
     }
     load()
@@ -77,6 +93,39 @@ export default function SettingsPage() {
     setPwSaving(false)
   }
 
+  async function handleSaveBranding() {
+    if (!profile || !org) return
+    setBrandSaving(true); setBrandMsg('')
+    let logo_url = org.logo_url
+    // Upload new logo if chosen
+    if (logoFile) {
+      const ext = logoFile.name.split('.').pop()
+      const path = `${profile.organisation_id}/logo.${ext}`
+      const { error: upErr } = await supabase.storage.from('logos').upload(path, logoFile, { upsert: true })
+      if (upErr) { setBrandMsg('Logo upload failed: ' + upErr.message); setBrandSaving(false); return }
+      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
+      logo_url = publicUrl
+    }
+    const { error } = await supabase.from('organisations').update({
+      brand_color: brandColor,
+      company_display_name: displayName.trim() || null,
+      logo_url,
+    }).eq('id', profile.organisation_id)
+    if (error) { setBrandMsg('Error: ' + error.message) }
+    else {
+      setBrandMsg('Branding saved!')
+      setOrg(o => o ? { ...o, brand_color: brandColor, company_display_name: displayName.trim() || null, logo_url: logo_url || null } : o)
+      // Apply new brand color immediately
+      document.documentElement.style.setProperty('--sc-brand', brandColor)
+      const hex = brandColor.replace('#','')
+      const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16)
+      document.documentElement.style.setProperty('--sc-brand-rgb', `${r},${g},${b}`)
+      document.documentElement.style.setProperty('--sc-brand-dim', `rgba(${r},${g},${b},0.15)`)
+      document.documentElement.style.setProperty('--sc-brand-glow', `rgba(${r},${g},${b},0.25)`)
+    }
+    setBrandSaving(false)
+  }
+
   async function handleSignOut() {
     await supabase.auth.signOut()
     router.push('/auth/login')
@@ -88,10 +137,7 @@ export default function SettingsPage() {
 
   return (
     <main className="sc-enter min-h-screen bg-page text-hi pb-28">
-      <header className="px-5 pt-12 pb-4 border-b border-rim">
-        <p className="text-xs text-dim uppercase tracking-widest mb-1">Account</p>
-        <h1 className="text-xl font-bold">Settings</h1>
-      </header>
+      <AppHeader organisationId={profile.organisation_id} eyebrow="Account" title="Settings" />
 
       <div className="px-5 py-6 space-y-8">
 
@@ -223,6 +269,85 @@ export default function SettingsPage() {
             </button>
           </form>
         </section>
+
+        {/* ── Branding (host only) ────────────────────────────── */}
+        {(profile?.role === 'host' || profile?.role === 'cohost') && (
+          <section className="space-y-4">
+            <h2 className="text-xs font-semibold text-dim uppercase tracking-widest">Branding</h2>
+            <div className="bg-card border border-rim rounded-2xl p-4 space-y-5">
+
+              {/* Logo upload */}
+              <div>
+                <label className="text-xs text-lo block mb-2">Company logo</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl border border-rim bg-well flex items-center justify-center overflow-hidden shrink-0">
+                    {logoPreview
+                      ? <img src={logoPreview} alt="logo" className="w-full h-full object-contain" />
+                      : <span className="text-2xl text-dim">🏢</span>
+                    }
+                  </div>
+                  <div className="flex-1">
+                    <label className="cursor-pointer inline-flex items-center gap-2 bg-well border border-rim rounded-xl px-4 py-2.5 text-sm text-hi hover:border-blue-500 transition">
+                      <span>📷</span> {logoFile ? logoFile.name : 'Choose image'}
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={e => {
+                          const f = e.target.files?.[0]
+                          if (!f) return
+                          setLogoFile(f)
+                          setLogoPreview(URL.createObjectURL(f))
+                        }} />
+                    </label>
+                    <p className="text-xs text-dim mt-1.5">PNG or SVG, shown on every page</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Display name */}
+              <div>
+                <label className="text-xs text-lo block mb-1.5">Company display name</label>
+                <input
+                  value={displayName}
+                  onChange={e => setDisplayName(e.target.value)}
+                  placeholder={org?.name || 'Your company name…'}
+                  className="w-full bg-well border border-rim rounded-xl px-4 py-3 text-sm text-hi placeholder-dim focus:outline-none focus:border-blue-500"
+                />
+                <p className="text-xs text-dim mt-1.5">Shows in the header of every page</p>
+              </div>
+
+              {/* Brand color */}
+              <div>
+                <label className="text-xs text-lo block mb-2">Brand color</label>
+                <div className="flex items-center gap-3">
+                  <input type="color" value={brandColor} onChange={e => setBrandColor(e.target.value)}
+                    className="w-10 h-10 rounded-lg border border-rim bg-well cursor-pointer p-0.5" />
+                  <div className="flex flex-wrap gap-2">
+                    {['#3b82f6','#8b5cf6','#ec4899','#f97316','#10b981','#ef4444','#f59e0b','#06b6d4'].map(c => (
+                      <button key={c} onClick={() => setBrandColor(c)}
+                        className="w-7 h-7 rounded-full border-2 transition"
+                        style={{ background: c, borderColor: brandColor === c ? 'white' : 'transparent' }} />
+                    ))}
+                  </div>
+                  <span className="text-xs text-dim font-mono">{brandColor}</span>
+                </div>
+                {/* Live preview */}
+                <div className="mt-3 flex items-center gap-3 bg-well rounded-xl px-3 py-2.5">
+                  <div className="w-6 h-6 rounded-full" style={{ background: brandColor }} />
+                  <span className="text-xs text-hi">Preview — navigation & accents</span>
+                  <div className="ml-auto h-1.5 w-16 rounded-full" style={{ background: brandColor }} />
+                </div>
+              </div>
+
+              {brandMsg && (
+                <p className={`text-xs ${brandMsg.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>{brandMsg}</p>
+              )}
+              <button onClick={handleSaveBranding} disabled={brandSaving}
+                className="w-full text-white font-semibold py-2.5 rounded-xl text-sm transition disabled:opacity-50"
+                style={{ background: 'var(--sc-brand)' }}>
+                {brandSaving ? 'Saving…' : '💾 Save Branding'}
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* ── Customisation (host only) ──────────────────────── */}
         {(profile?.role === 'host' || profile?.role === 'cohost') && (

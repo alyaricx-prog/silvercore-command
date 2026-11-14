@@ -14,26 +14,33 @@
 
 /* ── Dark theme (default) ───────────────────────────────────────── */
 :root {
-  --sc-page: #030712;
-  --sc-card: #111827;
-  --sc-well: #1f2937;
-  --sc-rim:  #1f2937;
-  --sc-rim2: #374151;
-  --sc-hi:   #f9fafb;
-  --sc-lo:   #9ca3af;
-  --sc-dim:  #6b7280;
+  --sc-page: #060b14;
+  --sc-card: #0d1626;
+  --sc-well: #111e33;
+  --sc-rim:  #1a2d4a;
+  --sc-rim2: #243d5e;
+  --sc-hi:   #f0f6ff;
+  --sc-lo:   #8ba4c4;
+  --sc-dim:  #526880;
+  /* brand accent (overridden per-org via inline style on <html>) */
+  --sc-brand: #3b82f6;
+  --sc-brand-dim: rgba(59,130,246,0.15);
+  --sc-brand-glow: rgba(59,130,246,0.25);
 }
 
 /* ── Light theme ────────────────────────────────────────────────── */
 [data-theme="light"] {
-  --sc-page: #f1f5f9;
+  --sc-page: #f0f4fb;
   --sc-card: #ffffff;
-  --sc-well: #f8fafc;
-  --sc-rim:  #e2e8f0;
-  --sc-rim2: #cbd5e1;
-  --sc-hi:   #0f172a;
-  --sc-lo:   #475569;
-  --sc-dim:  #64748b;
+  --sc-well: #f8faff;
+  --sc-rim:  #dde4f0;
+  --sc-rim2: #c5d0e4;
+  --sc-hi:   #0a1628;
+  --sc-lo:   #3d5478;
+  --sc-dim:  #6079a0;
+  --sc-brand: #2563eb;
+  --sc-brand-dim: rgba(37,99,235,0.1);
+  --sc-brand-glow: rgba(37,99,235,0.2);
 
   /* Tinted badges, alerts and accents were tuned for dark backgrounds.
      Remap those palette steps so they stay readable on white. */
@@ -80,6 +87,58 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 @media (prefers-reduced-motion: reduce) {
   .sc-enter, .sc-skeleton { animation: none; }
   button:not(:disabled):active { transform: none; }
+}
+
+
+/* ── Brand accent utilities ─────────────────────────────────────── */
+.sc-brand-bg   { background: var(--sc-brand); }
+.sc-brand-text { color: var(--sc-brand); }
+.sc-brand-border { border-color: var(--sc-brand); }
+.sc-brand-glow { box-shadow: 0 0 0 1px var(--sc-brand-glow), 0 4px 24px var(--sc-brand-glow); }
+
+/* ── Card depth & glass ─────────────────────────────────────────── */
+.sc-card-depth {
+  background: var(--sc-card);
+  border: 1px solid var(--sc-rim);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 0 0.5px rgba(255,255,255,0.03) inset;
+}
+.sc-glass {
+  background: rgba(13,22,38,0.7);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+[data-theme="light"] .sc-glass {
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* ── Page header gradient bar ───────────────────────────────────── */
+.sc-header-bar {
+  background: linear-gradient(180deg, rgba(var(--sc-brand-rgb,59,130,246),0.08) 0%, transparent 100%);
+  border-bottom: 1px solid var(--sc-rim);
+}
+
+/* ── Stat tile ─────────────────────────────────────────────────── */
+.sc-stat-tile {
+  background: var(--sc-card);
+  border: 1px solid var(--sc-rim);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+
+/* ── App enter animation ────────────────────────────────────────── */
+@keyframes sc-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.sc-slide-up { animation: sc-slide-up 0.25s ease-out both; }
+
+/* ── Focus ring ─────────────────────────────────────────────────── */
+.sc-focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--sc-brand);
 }
 
 /* ── Leaflet fixes ──────────────────────────────────────────────── */

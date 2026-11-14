@@ -1,4 +1,12 @@
 export type Role = 'host' | 'cohost' | 'employee'
+export type Organisation = {
+  id: string
+  name: string
+  slug: string
+  logo_url: string | null
+  brand_color: string | null
+  company_display_name: string | null
+}
 
 export type Profile = {
   id: string
@@ -13,14 +21,6 @@ export type Profile = {
   created_at: string
 }
 
-export type Organisation = {
-  id: string
-  name: string
-  slug: string
-  logo_url: string
-  theme: string
-  created_at: string
-}
 
 export type Assignment = {
   id: string

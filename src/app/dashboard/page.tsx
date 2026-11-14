@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
+import AppHeader from '@/components/AppHeader'
 import PageSkeleton from '@/components/Skeleton'
 import type { Profile, Assignment, Announcement, PulseEntry } from '@/lib/types'
 import { usePushSubscription } from '@/lib/usePushSubscription'
@@ -112,14 +113,11 @@ export default function DashboardPage() {
   return (
     <main className="sc-enter min-h-screen bg-page text-hi pb-28">
       {/* Header */}
-      <header className="px-5 pt-12 pb-6">
-        <p className="text-xs text-dim uppercase tracking-widest mb-1">SilverCore Command</p>
-        <h1 className="text-2xl font-bold">{greeting()},</h1>
-        <p className="text-xl text-blue-400 font-semibold">{profile.full_name.split(' ')[0]}</p>
-        <p className="text-xs text-dim mt-1 capitalize">
-          {profile.role}{profile.group_name ? ` · ${profile.group_name}` : ''}
-        </p>
-      </header>
+      <AppHeader
+        organisationId={profile.organisation_id}
+        title={`${greeting()}, ${profile.full_name.split(' ')[0]}`}
+        subtitle={`${profile.role.charAt(0).toUpperCase()+profile.role.slice(1)}${profile.group_name ? ` · ${profile.group_name}` : ''}`}
+      />
 
       <div className="px-5 space-y-6">
         {/* Announcements */}

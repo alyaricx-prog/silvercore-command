@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
+import AppHeader from '@/components/AppHeader'
 import PageSkeleton from '@/components/Skeleton'
 import AssignmentCard from '@/components/AssignmentCard'
 import QuickLogModal from '@/components/QuickLogModal'
@@ -114,11 +115,8 @@ export default function MyWorkPage() {
 
   return (
     <main className="sc-enter min-h-screen bg-page text-hi pb-24">
-      <header className="px-5 pt-12 pb-4 border-b border-rim">
-        <p className="text-xs text-dim uppercase tracking-widest mb-1">Field</p>
-        <h1 className="text-xl font-bold">My Work</h1>
-        {profile && <p className="text-xs text-dim mt-0.5">{profile.full_name}{profile.group_name ? ` · Group ${profile.group_name}` : ''}</p>}
-      </header>
+      <AppHeader organisationId={profile!.organisation_id} eyebrow="Field" title="My Work"
+        subtitle={profile!.full_name + (profile!.group_name ? ` · Group ${profile!.group_name}` : '')} />
 
       {/* Filter toggle */}
       <div className="flex border-b border-rim">

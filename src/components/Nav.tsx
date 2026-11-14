@@ -95,7 +95,7 @@ export default function Nav({ role }: NavProps) {
       ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-rim pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 sc-glass border-t border-rim pb-safe">
       <div className="flex items-stretch h-14 overflow-x-auto scrollbar-none">
         {links.map(link => {
           const active = path === link.href || path.startsWith(link.href + '/')
@@ -103,12 +103,21 @@ export default function Nav({ role }: NavProps) {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex-1 min-w-[52px] flex flex-col items-center justify-center gap-0.5 transition-colors ${
-                active ? 'text-blue-400' : 'text-dim hover:text-lo'
+              className={`flex-1 min-w-[52px] flex flex-col items-center justify-center gap-0.5 transition-all relative ${
+                active ? 'text-hi' : 'text-dim hover:text-lo'
               }`}
             >
-              {link.icon}
-              <span className="text-[9px] font-medium leading-none">{link.label}</span>
+              {active && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full sc-brand-bg" />
+              )}
+              <span className={`transition-transform ${active ? 'scale-110' : ''}`}
+                style={active ? { color: 'var(--sc-brand)' } : undefined}>
+                {link.icon}
+              </span>
+              <span className={`text-[9px] font-medium leading-none ${active ? 'font-semibold' : ''}`}
+                style={active ? { color: 'var(--sc-brand)' } : undefined}>
+                {link.label}
+              </span>
             </Link>
           )
         })}
