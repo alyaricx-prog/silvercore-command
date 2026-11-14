@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import PageSkeleton from '@/components/Skeleton'
 import type { Profile, Goal, Badge } from '@/lib/types'
+import Leaderboard from '@/components/Leaderboard'
 
 const BADGE_EMOJI: Record<string, string> = {
   first_deal: '🎯',
@@ -77,10 +78,8 @@ export default function GoalsPage() {
       ])
       setGoals(goalsRes.data || [])
       setBadges(badgesRes.data || [])
-      if (prof.role === 'host' || prof.role === 'cohost') {
-        const { data: t } = await supabase.from('profiles').select('*').eq('organisation_id', prof.organisation_id)
-        setTeam(t || [])
-      }
+      const { data: t } = await supabase.from('profiles').select('*').eq('organisation_id', prof.organisation_id)
+      setTeam(t || [])
       setLoading(false)
     }
     load()
@@ -191,6 +190,9 @@ export default function GoalsPage() {
       )}
 
       <div className="px-5 py-5 space-y-6">
+
+        {/* Leaderboard */}
+        {profile && <Leaderboard organisationId={profile.organisation_id} team={team} currentProfileId={profile.id} />}
 
         {/* My Badges */}
         {myBadges.length > 0 && (

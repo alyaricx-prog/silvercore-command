@@ -19,6 +19,7 @@ export default function MyWorkPage() {
   const [logTarget, setLogTarget] = useState<string | null>(null)
   const [checkInTarget, setCheckInTarget] = useState<string | null>(null)
   const [toast, setToast] = useState('')
+  const [todayStats, setTodayStats] = useState({ checkIns: 0, deals: 0 })
   const [trainingNotes, setTrainingNotes] = useState<TrainingNote[]>([])
   const router = useRouter()
   const supabase = createClient()
@@ -39,6 +40,15 @@ export default function MyWorkPage() {
       setAssignments(a || [])
       setTrainingNotes(tn || [])
       setLoading(false)
+
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+      const [{ count: checkInCount }, { count: dealCount }] = await Promise.all([
+        supabase.from('check_ins').select('id', { count: 'exact', head: true })
+          .eq('employee_id', user.id).gte('created_at', todayStart.toISOString()),
+        supabase.from('deal_logs').select('id', { count: 'exact', head: true })
+          .eq('logged_by', user.id).eq('outcome', 'closed').gte('created_at', todayStart.toISOString()),
+      ])
+      setTodayStats({ checkIns: checkInCount ?? 0, deals: dealCount ?? 0 })
     }
     load()
   }, [])
@@ -66,6 +76,9 @@ export default function MyWorkPage() {
     })
     setLogTarget(null)
     showToast('Deal logged ✓')
+    if (data.outcome === 'closed') {
+      setTodayStats(prev => ({ ...prev, deals: prev.deals + 1 }))
+    }
 
     // Notify the team on wins and losses — those are the moments worth a ping
     if (data.outcome === 'closed' || data.outcome === 'lost') {
@@ -98,6 +111,7 @@ export default function MyWorkPage() {
         handleStatusChange(checkInTarget, 'in_progress')
       }
       showToast('Checked in ✓')
+      setTodayStats(prev => ({ ...prev, checkIns: prev.checkIns + 1 }))
     }
   }
 
@@ -117,6 +131,21 @@ export default function MyWorkPage() {
     <main className="sc-enter min-h-screen bg-page text-hi pb-24">
       <AppHeader organisationId={profile!.organisation_id} eyebrow="Field" title="My Work"
         subtitle={profile!.full_name + (profile!.group_name ? ` · Group ${profile!.group_name}` : '')} />
+
+      {/* Today at a glance */}
+      <div className="px-5 pt-4 pb-1 grid grid-cols-2 gap-3">
+        <div className="bg-card border border-rim rounded-xl px-4 py-3 text-center">
+          <p className="text-2xl font-bold text-hi">{todayStats.checkIns}</p>
+          <p className="text-xs text-dim mt-0.5">Check-ins today</p>
+        </div>
+        <div className="bg-card border border-rim rounded-xl px-4 py-3 text-center">
+          <p className="text-2xl font-bold" style={{ color: '#4ade80' }}>{todayStats.deals}</p>
+          <p className="text-xs text-dim mt-0.5">Closed today</p>
+        </div>
+      </div>
+      <a href="/goals" className="block mx-5 mt-2 mb-1 text-center text-xs text-blue-400 py-1">
+        🏆 See leaderboard →
+      </a>
 
       {/* Filter toggle */}
       <div className="flex border-b border-rim">
