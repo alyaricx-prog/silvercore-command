@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import AppHeader from '@/components/AppHeader'
 import PageSkeleton from '@/components/Skeleton'
-import type { Profile, Assignment, Announcement, PulseEntry } from '@/lib/types'
+import type { Profile, Assignment, Announcement, PulseEntry, DealLog } from '@/lib/types'
 import { usePushSubscription } from '@/lib/usePushSubscription'
 
 export default function DashboardPage() {
@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [assignments,   setAssignments]   = useState<Assignment[]>([])
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [dismissed,     setDismissed]     = useState<Set<string>>(new Set())
+  const [dealLogs,      setDealLogs]      = useState<DealLog[]>([])
   const [todayPulse,    setTodayPulse]    = useState<PulseEntry | null | undefined>(undefined)
   const [pulseScore,    setPulseScore]    = useState(3)
   const [pulseNote,     setPulseNote]     = useState('')
@@ -47,6 +48,7 @@ export default function DashboardPage() {
         { data: ann },
         { data: dis },
         { data: pulse },
+        { data: dl },
       ] = await Promise.all([
         isHost
           ? q.neq('status', 'cancelled').order('created_at', { ascending: false }).limit(50)
@@ -61,12 +63,16 @@ export default function DashboardPage() {
           .eq('employee_id', user.id)
           .gte('created_at', today.toISOString())
           .limit(1),
+        supabase.from('deal_logs').select('*')
+          .eq('organisation_id', prof.organisation_id)
+          .order('created_at', { ascending: false }).limit(30),
       ])
 
       setAssignments(a || [])
       setAnnouncements(ann || [])
       setDismissed(new Set((dis || []).map((d: { announcement_id: string }) => d.announcement_id)))
       setTodayPulse(pulse && pulse.length > 0 ? pulse[0] : null)
+      setDealLogs(dl || [])
       setLoading(false)
     }
     load()
@@ -238,40 +244,69 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Recent activity feed */}
-        {assignments.length > 0 && (
-          <div>
-            <h2 className="sc-section-label mb-3">Recent Activity</h2>
-            <div className="space-y-2">
-            {assignments.slice(0, 5).map(a => {
-              const statusColor =
-                a.status === 'completed'    ? '#4ade80' :
-                a.status === 'in_progress'  ? 'var(--sc-brand)' :
-                a.status === 'acknowledged' ? '#c084fc' : '#55556a'
-              const statusLabel =
-                a.status === 'completed'    ? 'Closed'  :
-                a.status === 'in_progress'  ? 'Active'  :
-                a.status === 'acknowledged' ? 'Ack'     : 'Pending'
-              const badgeCls =
-                a.status === 'completed'    ? 'sc-badge sc-badge-green'  :
-                a.status === 'in_progress'  ? 'sc-badge sc-badge-blue'   :
-                a.status === 'acknowledged' ? 'sc-badge sc-badge-purple' :
-                                             'sc-badge sc-badge-gray'
-              return (
-                <a key={a.id} href="/assignments"
-                  className="sc-feed-item flex items-center justify-between gap-3"
-                  style={{ borderLeftColor: statusColor }}>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-hi leading-snug truncate">{a.title}</p>
-                    {a.address && <p className="text-xs text-dim mt-0.5 truncate">{a.address}</p>}
-                  </div>
-                  <span className={badgeCls}>{statusLabel}</span>
-                </a>
-              )
-            })}
+        {/* ── Live workspace feed ── */}
+        {(assignments.length > 0 || dealLogs.length > 0) && (() => {
+          function relTime(ts: string) {
+            const s = Math.floor((Date.now() - new Date(ts).getTime()) / 1000)
+            if (s < 60)  return 'just now'
+            if (s < 3600) return `${Math.floor(s/60)}m ago`
+            if (s < 86400) return `${Math.floor(s/3600)}h ago`
+            return `${Math.floor(s/86400)}d ago`
+          }
+          type FeedItem = {
+            id: string; kind: 'assignment'|'deal'
+            title: string; subtitle: string
+            ts: string; color: string; icon: string; badge: string; badgeColor: string
+            href: string
+          }
+          const items: FeedItem[] = []
+          assignments.slice(0,10).forEach(a => {
+            const color = a.status==='completed'?'#4ade80':a.status==='in_progress'?'var(--sc-brand)':a.status==='acknowledged'?'#c084fc':'#55556a'
+            const badge = a.status==='completed'?'Closed':a.status==='in_progress'?'Active':a.status==='acknowledged'?'Ack':'Pending'
+            items.push({ id:a.id, kind:'assignment', title:a.title, subtitle:a.address||'No address', ts:a.created_at, color, icon:'📋', badge, badgeColor:color, href:'/assignments' })
+          })
+          dealLogs.slice(0,10).forEach(d => {
+            const color = d.outcome==='won'?'#4ade80':d.outcome==='lost'?'#f87171':d.outcome==='followup'?'#38bdf8':'#fbbf24'
+            const icon  = d.outcome==='won'?'💼':d.outcome==='lost'?'⚠️':d.outcome==='followup'?'🔄':'📝'
+            const badge = d.outcome==='won'?'Won':d.outcome==='lost'?'Lost':d.outcome==='followup'?'Follow-up':'No Answer'
+            items.push({ id:d.id, kind:'deal', title:d.address||'Deal logged', subtitle:d.notes||'No notes', ts:d.created_at, color, icon, badge, badgeColor:color, href:'/deals' })
+          })
+          items.sort((a,b) => new Date(b.ts).getTime()-new Date(a.ts).getTime())
+          const recent = items.slice(0,8)
+          return (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="sc-section-label">Live Activity</h2>
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-900/20 border border-green-900/40 rounded-full px-2 py-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"/>LIVE
+                  </span>
+                </div>
+                <a href="/feed" className="text-xs text-blue-400 hover:text-blue-300">View all →</a>
+              </div>
+              <div className="space-y-2">
+                {recent.map(item => (
+                  <a key={item.id} href={item.href}
+                    className="sc-feed-item flex items-start gap-3"
+                    style={{ borderLeftColor: item.color }}>
+                    <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-hi leading-snug truncate">{item.title}</p>
+                      <p className="text-xs text-dim mt-0.5 truncate">{item.subtitle}</p>
+                    </div>
+                    <div className="shrink-0 text-right flex flex-col items-end gap-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                        style={{ color:item.badgeColor, borderColor:`${item.badgeColor}40`, background:`${item.badgeColor}18` }}>
+                        {item.badge}
+                      </span>
+                      <span className="text-[10px] text-dim">{relTime(item.ts)}</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
       </div>
 
       <Nav role={profile.role} />

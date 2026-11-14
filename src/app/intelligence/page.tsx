@@ -513,39 +513,147 @@ export default function IntelligencePage() {
       )}
 
       {/* ── PULSE ── */}
-      {tab === 'pulse' && (
-        <div className="px-5 py-4 space-y-4">
-          <div className="bg-card border border-rim rounded-xl p-4">
-            <h2 className="text-xs text-dim uppercase tracking-widest mb-3">Team Pulse — Last 7 Days</h2>
-            {pulseEntries.length === 0 ? (
-              <p className="text-dim text-sm text-center py-6">No pulse entries yet. Reps submit from their dashboard.</p>
+      {tab === 'pulse' && (() => {
+        const MIN_RESPONSES = 5
+        // Group by group_name or 'All Reps'
+        const byGroup: Record<string, { scores: number[]; notes: string[] }> = {}
+        pulseEntries.forEach(p => {
+          const g = p.group_name || 'All Reps'
+          if (!byGroup[g]) byGroup[g] = { scores: [], notes: [] }
+          byGroup[g].scores.push(p.score)
+          if (p.note) byGroup[g].notes.push(p.note)
+        })
+        const totalCount = pulseEntries.length
+        const overallAvg = totalCount ? pulseEntries.reduce((s,p) => s+p.score,0)/totalCount : 0
+        const moodLabel = overallAvg >= 4.2 ? { text:'Energised', color:'#4ade80', icon:'⚡' }
+                        : overallAvg >= 3.4 ? { text:'Steady', color:'#38bdf8', icon:'✦' }
+                        : overallAvg >= 2.6 ? { text:'Mixed', color:'#fbbf24', icon:'▲' }
+                        : { text:'Low', color:'#f87171', icon:'◉' }
+        // 7-day trend: bucket by day
+        const now = Date.now()
+        const dayBuckets: number[][] = Array.from({length:7}, () => [])
+        pulseEntries.forEach(p => {
+          const ago = Math.floor((now - new Date(p.created_at).getTime()) / 86400000)
+          if (ago < 7) dayBuckets[6 - ago].push(p.score)
+        })
+        const trendPts = dayBuckets.map(b => b.length ? b.reduce((a,v)=>a+v,0)/b.length : null)
+        const sparkMax = 5, sparkW = 160, sparkH = 36
+        const ptCoords = trendPts.map((v, i) => v !== null ? { x: (i/(trendPts.length-1))*sparkW, y: sparkH - (v/sparkMax)*sparkH } : null)
+        const pathD = ptCoords.filter(Boolean).map((p,i) => `${i===0?'M':'L'} ${p!.x} ${p!.y}`).join(' ')
+
+        return (
+          <div className="px-5 py-4 space-y-4">
+
+            {/* ── Org-level mood card ── */}
+            {totalCount < MIN_RESPONSES ? (
+              <div className="bg-card border border-rim rounded-xl p-5 text-center">
+                <div className="text-3xl mb-2">🔒</div>
+                <p className="text-sm font-semibold text-hi mb-1">Mood is private until {MIN_RESPONSES} responses</p>
+                <p className="text-dim text-xs">{totalCount} of {MIN_RESPONSES} needed · Individual data stays anonymous</p>
+              </div>
             ) : (
-              <>
-                <div className="flex justify-between text-xs text-dim mb-2">
-                  <span>Avg score</span>
-                  <span className="font-bold text-hi">{(pulseEntries.reduce((s,p) => s + p.score, 0) / pulseEntries.length).toFixed(1)} / 5</span>
+              <div className="bg-card border border-rim rounded-xl p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="text-xs text-dim uppercase tracking-widest mb-0.5">Company Mood</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-black text-hi">{overallAvg.toFixed(1)}</span>
+                      <span className="text-sm text-dim">/5</span>
+                      <span className="text-sm font-bold" style={{color:moodLabel.color}}>{moodLabel.icon} {moodLabel.text}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-dim">{totalCount} responses</p>
+                    <p className="text-[10px] text-dim mt-0.5">last 7 days</p>
+                  </div>
                 </div>
-                <div className="h-2 bg-well rounded-full mb-4">
-                  <div className="h-full rounded-full bg-green-500 transition-all"
-                    style={{ width: `${(pulseEntries.reduce((s,p) => s + p.score, 0) / pulseEntries.length / 5) * 100}%` }} />
+                {/* Mood bar */}
+                <div className="h-2.5 bg-well rounded-full overflow-hidden mb-4">
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{ width:`${(overallAvg/5)*100}%`, background:moodLabel.color }} />
                 </div>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {pulseEntries.map(p => (
-                    <div key={p.id} className="flex items-start gap-3 bg-well rounded-xl px-3 py-2">
-                      <span className="text-lg">{p.score >= 4 ? '🟢' : p.score >= 3 ? '🟡' : '🔴'}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-hi">{p.score}/5</p>
-                        {p.note && <p className="text-xs text-dim truncate">{p.note}</p>}
-                        <p className="text-xs text-dim mt-0.5">{new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                {/* Sparkline trend */}
+                <div>
+                  <p className="text-[10px] text-dim mb-1.5 uppercase tracking-wider">7-day trend</p>
+                  <svg width={sparkW} height={sparkH} className="overflow-visible">
+                    {pathD && <path d={pathD} fill="none" stroke={moodLabel.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.8"/>}
+                    {ptCoords.map((pt, i) => pt && <circle key={i} cx={pt.x} cy={pt.y} r="3" fill={moodLabel.color}/>)}
+                  </svg>
+                </div>
+              </div>
+            )}
+
+            {/* ── Score distribution ── */}
+            {totalCount >= MIN_RESPONSES && (
+              <div className="bg-card border border-rim rounded-xl p-4">
+                <p className="text-xs text-dim uppercase tracking-widest mb-3">Score Distribution</p>
+                <div className="space-y-2">
+                  {[5,4,3,2,1].map(score => {
+                    const count = pulseEntries.filter(p=>Math.round(p.score)===score).length
+                    const pct = totalCount ? (count/totalCount)*100 : 0
+                    const colors: Record<number,string> = {5:'#4ade80',4:'#86efac',3:'#fbbf24',2:'#fb923c',1:'#f87171'}
+                    return (
+                      <div key={score} className="flex items-center gap-2">
+                        <span className="text-xs text-dim w-4 text-right">{score}</span>
+                        <div className="flex-1 h-2 bg-well rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all duration-500"
+                            style={{width:`${pct}%`, background:colors[score]}}/>
+                        </div>
+                        <span className="text-xs text-dim w-6">{count}</span>
                       </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Group breakdowns ── */}
+            {totalCount >= MIN_RESPONSES && Object.entries(byGroup).length > 1 && (
+              <div className="space-y-2.5">
+                <p className="text-xs text-dim uppercase tracking-widest px-1">By Group</p>
+                {Object.entries(byGroup).map(([group, data]) => {
+                  const avg = data.scores.reduce((a,v)=>a+v,0)/data.scores.length
+                  const show = data.scores.length >= MIN_RESPONSES
+                  const c = avg >= 4 ? '#4ade80' : avg >= 3 ? '#fbbf24' : '#f87171'
+                  return (
+                    <div key={group} className="bg-card border border-rim rounded-xl px-4 py-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-semibold text-hi">{group}</p>
+                        {show
+                          ? <span className="text-sm font-bold" style={{color:c}}>{avg.toFixed(1)}</span>
+                          : <span className="text-xs text-dim">🔒 {data.scores.length}/{MIN_RESPONSES}</span>}
+                      </div>
+                      {show && (
+                        <div className="h-1.5 bg-well rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{width:`${(avg/5)*100}%`, background:c}}/>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* ── Anonymous notes ── */}
+            {totalCount >= MIN_RESPONSES && pulseEntries.some(p=>p.note) && (
+              <div className="bg-card border border-rim rounded-xl p-4">
+                <p className="text-xs text-dim uppercase tracking-widest mb-3">What the team is saying · anonymous</p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {pulseEntries.filter(p=>p.note).map((p,i) => (
+                    <div key={i} className="flex items-start gap-2.5 bg-well rounded-xl px-3 py-2.5">
+                      <span style={{color: p.score>=4?'#4ade80':p.score>=3?'#fbbf24':'#f87171'}} className="text-sm mt-0.5">
+                        {p.score>=4?'✦':p.score>=3?'▲':'◉'}
+                      </span>
+                      <p className="text-xs text-lo leading-relaxed">{p.note}</p>
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
+
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ── FRICTION REPORTS ── */}
       {tab === 'friction' && (

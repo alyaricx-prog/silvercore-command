@@ -61,6 +61,14 @@ const RouteIcon = () => (
   </svg>
 )
 
+const FeedIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="4" cy="14" r="1.2" fill="currentColor" stroke="none"/>
+    <path d="M2 10c3.3 0 6 2.7 6 6"/>
+    <path d="M2 6c5.5 0 10 4.5 10 10"/>
+    <path d="M2 2c8.3 0 14 6.7 14 14"/>
+  </svg>
+)
 const SimIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
@@ -81,6 +89,7 @@ export default function Nav({ role }: NavProps) {
         { href: '/customers',    label: 'People',  icon: <UsersIcon /> },
         { href: '/intelligence', label: 'Intel',   icon: <ChartIcon /> },
         { href: '/simulation',  label: 'Sim',     icon: <SimIcon /> },
+  { href: '/feed',        label: 'Feed',    icon: <FeedIcon /> },
         { href: '/goals',        label: 'Goals',   icon: <TrophyIcon /> },
         { href: '/reminders',    label: 'Alerts',  icon: <BellIcon /> },
         { href: '/vault',        label: 'Vault',   icon: <FolderIcon /> },
