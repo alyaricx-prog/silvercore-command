@@ -61,6 +61,11 @@ const RouteIcon = () => (
   </svg>
 )
 
+const SimIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+  </svg>
+)
 type NavProps = { role: Role }
 type NavLink = { href: string; label: string; icon: React.ReactNode }
 
@@ -75,6 +80,7 @@ export default function Nav({ role }: NavProps) {
         { href: '/map',          label: 'Map',     icon: <MapIcon /> },
         { href: '/customers',    label: 'People',  icon: <UsersIcon /> },
         { href: '/intelligence', label: 'Intel',   icon: <ChartIcon /> },
+        { href: '/simulation',  label: 'Sim',     icon: <SimIcon /> },
         { href: '/goals',        label: 'Goals',   icon: <TrophyIcon /> },
         { href: '/reminders',    label: 'Alerts',  icon: <BellIcon /> },
         { href: '/vault',        label: 'Vault',   icon: <FolderIcon /> },
