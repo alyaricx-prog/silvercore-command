@@ -34,38 +34,55 @@ export default function AppHeader({ organisationId, eyebrow, title, subtitle, ri
   const displayName = org?.company_display_name || org?.name
 
   return (
-    <header className="sc-header-bar px-5 pt-12 pb-4 relative">
-      <div className="flex items-start justify-between gap-3">
+    <header className="sc-header-bar px-5 pt-14 pb-5 relative">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
+          {/* Logo / monogram */}
           {org?.logo_url ? (
-            <div className="shrink-0 w-9 h-9 rounded-xl overflow-hidden border border-rim shadow-sm">
+            <div className="shrink-0 w-10 h-10 rounded-2xl overflow-hidden border border-rim shadow-lg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={org.logo_url} alt={displayName ?? ''} className="w-full h-full object-contain bg-card" />
             </div>
           ) : displayName ? (
-            <div className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-sm"
-              style={{ background: 'var(--sc-brand)' }}>
+            <div
+              className="shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-black text-white shadow-lg"
+              style={{ background: 'var(--sc-brand)' }}
+            >
               {displayName.slice(0,2).toUpperCase()}
             </div>
           ) : null}
+
           <div className="min-w-0">
-            {displayName && (
-              <p className="text-[10px] font-semibold uppercase tracking-widest truncate"
+            {/* Org name or eyebrow */}
+            {displayName ? (
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] mb-0.5 truncate"
                 style={{ color: 'var(--sc-brand)' }}>
                 {displayName}
               </p>
+            ) : eyebrow ? (
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] mb-0.5 text-dim">{eyebrow}</p>
+            ) : null}
+
+            {/* Main title — large and bold */}
+            <h1 className="text-[1.6rem] font-black text-white leading-none tracking-tight truncate">
+              {title}
+            </h1>
+
+            {/* Subtitle */}
+            {subtitle && (
+              <p className="text-xs text-dim mt-1 truncate font-medium">{subtitle}</p>
             )}
-            {eyebrow && !displayName && (
-              <p className="text-xs text-dim uppercase tracking-widest">{eyebrow}</p>
-            )}
-            <h1 className="text-xl font-bold text-hi leading-tight truncate">{title}</h1>
-            {subtitle && <p className="text-xs text-dim mt-0.5 truncate">{subtitle}</p>}
           </div>
         </div>
-        {right && <div className="shrink-0 mt-1">{right}</div>}
+
+        {right && <div className="shrink-0">{right}</div>}
       </div>
-      <div className="absolute bottom-0 left-5 right-5 h-px"
-        style={{ background: 'linear-gradient(90deg, var(--sc-brand) 0%, transparent 100%)', opacity: 0.35 }} />
+
+      {/* Accent line — brand gradient left-to-right */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px"
+        style={{ background: 'linear-gradient(90deg, rgba(var(--sc-brand-rgb,59,130,246),0.5) 0%, transparent 70%)' }}
+      />
     </header>
   )
 }

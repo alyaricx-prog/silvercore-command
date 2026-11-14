@@ -12,18 +12,20 @@
   --color-dim:   var(--sc-dim);
 }
 
-/* ── Dark theme (default) ───────────────────────────────────────── */
+/* ── Dark theme ─────────────────────────────────────────────────── */
 :root {
-  --sc-page: #060b14;
-  --sc-card: #0d1626;
-  --sc-well: #111e33;
-  --sc-rim:  #1a2d4a;
-  --sc-rim2: #243d5e;
-  --sc-hi:   #f0f6ff;
-  --sc-lo:   #8ba4c4;
-  --sc-dim:  #526880;
+  /* Near-pure-black base — Citizen-style */
+  --sc-page: #09090f;
+  --sc-card: #111119;
+  --sc-well: #16161f;
+  --sc-rim:  #1e1e2a;
+  --sc-rim2: #282836;
+  --sc-hi:   #ffffff;
+  --sc-lo:   #9898aa;
+  --sc-dim:  #55556a;
   /* brand accent (overridden per-org via inline style on <html>) */
   --sc-brand: #3b82f6;
+  --sc-brand-rgb: 59,130,246;
   --sc-brand-dim: rgba(59,130,246,0.15);
   --sc-brand-glow: rgba(59,130,246,0.25);
 }
@@ -42,8 +44,6 @@
   --sc-brand-dim: rgba(37,99,235,0.1);
   --sc-brand-glow: rgba(37,99,235,0.2);
 
-  /* Tinted badges, alerts and accents were tuned for dark backgrounds.
-     Remap those palette steps so they stay readable on white. */
   --color-blue-300: #1d4ed8;   --color-blue-400: #2563eb;   --color-blue-900: #bfdbfe;
   --color-green-300: #15803d;  --color-green-400: #16a34a;  --color-green-900: #bbf7d0;
   --color-red-300: #b91c1c;    --color-red-400: #dc2626;    --color-red-800: #fca5a5;  --color-red-900: #fecaca;
@@ -56,25 +56,41 @@
 body {
   background: var(--sc-page);
   color: var(--sc-hi);
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: -apple-system, "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  font-feature-settings: "kern" 1, "liga" 1;
 }
 
-/* ── Safe areas (iPhone home indicator / notch) ─────────────────── */
+/* ── Safe areas ─────────────────────────────────────────────────── */
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* ── Motion & feedback ──────────────────────────────────────────── */
+/* ── Animations ─────────────────────────────────────────────────── */
 @keyframes sc-enter {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 @keyframes sc-shimmer {
   0%, 100% { opacity: 1; }
-  50%      { opacity: 0.45; }
+  50%      { opacity: 0.4; }
 }
-.sc-enter    { animation: sc-enter 0.22s ease-out both; }
+@keyframes sc-slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes sc-ping {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  70%  { transform: scale(2.2); opacity: 0;   }
+  100% { transform: scale(2.2); opacity: 0;   }
+}
+@keyframes sc-breathe {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.12); }
+}
+
+.sc-enter    { animation: sc-enter 0.2s ease-out both; }
+.sc-slide-up { animation: sc-slide-up 0.25s ease-out both; }
 .sc-skeleton { background: var(--sc-well); border-radius: 0.5rem; animation: sc-shimmer 1.4s ease-in-out infinite; }
 
 button { transition-property: color, background-color, border-color, opacity, transform; transition-duration: 150ms; }
@@ -85,55 +101,104 @@ button:disabled { cursor: not-allowed; }
 input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .sc-enter, .sc-skeleton { animation: none; }
+  .sc-enter, .sc-skeleton, .sc-slide-up { animation: none; }
   button:not(:disabled):active { transform: none; }
 }
 
-
 /* ── Brand accent utilities ─────────────────────────────────────── */
-.sc-brand-bg   { background: var(--sc-brand); }
-.sc-brand-text { color: var(--sc-brand); }
+.sc-brand-bg     { background: var(--sc-brand); }
+.sc-brand-text   { color: var(--sc-brand); }
 .sc-brand-border { border-color: var(--sc-brand); }
-.sc-brand-glow { box-shadow: 0 0 0 1px var(--sc-brand-glow), 0 4px 24px var(--sc-brand-glow); }
+.sc-brand-glow   { box-shadow: 0 0 0 1px var(--sc-brand-glow), 0 4px 24px var(--sc-brand-glow); }
 
-/* ── Card depth & glass ─────────────────────────────────────────── */
-.sc-card-depth {
-  background: var(--sc-card);
-  border: 1px solid var(--sc-rim);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 0 0.5px rgba(255,255,255,0.03) inset;
-}
+/* ── Glass surface ──────────────────────────────────────────────── */
 .sc-glass {
-  background: rgba(13,22,38,0.7);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(9,9,15,0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.05);
 }
 [data-theme="light"] .sc-glass {
-  background: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.80);
   border: 1px solid rgba(0,0,0,0.08);
 }
 
-/* ── Page header gradient bar ───────────────────────────────────── */
+/* ── Page header ────────────────────────────────────────────────── */
 .sc-header-bar {
-  background: linear-gradient(180deg, rgba(var(--sc-brand-rgb,59,130,246),0.08) 0%, transparent 100%);
-  border-bottom: 1px solid var(--sc-rim);
+  background: linear-gradient(180deg,
+    rgba(var(--sc-brand-rgb,59,130,246),0.1) 0%,
+    rgba(var(--sc-brand-rgb,59,130,246),0.03) 60%,
+    transparent 100%);
 }
 
-/* ── Stat tile ─────────────────────────────────────────────────── */
+/* ── Stat tiles ─────────────────────────────────────────────────── */
 .sc-stat-tile {
   background: var(--sc-card);
   border: 1px solid var(--sc-rim);
   border-radius: 1rem;
-  padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  padding: 1.25rem 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  position: relative;
+  overflow: hidden;
+}
+.sc-stat-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%);
+  pointer-events: none;
 }
 
-/* ── App enter animation ────────────────────────────────────────── */
-@keyframes sc-slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* ── Feed / activity list items ─────────────────────────────────── */
+/* Used for assignments, quick-links, any "row with accent" */
+.sc-feed-item {
+  background: var(--sc-card);
+  border-radius: 0.875rem;
+  border: 1px solid var(--sc-rim);
+  border-left: 3px solid var(--sc-brand);
+  padding: 0.875rem 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  transition: border-color 150ms, background 150ms;
 }
-.sc-slide-up { animation: sc-slide-up 0.25s ease-out both; }
+.sc-feed-item:active {
+  background: var(--sc-well);
+}
+
+/* ── Status badge pill ──────────────────────────────────────────── */
+.sc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+.sc-badge-green  { background: rgba(34,197,94,0.15);  color: #4ade80; }
+.sc-badge-blue   { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.sc-badge-purple { background: rgba(168,85,247,0.15); color: #c084fc; }
+.sc-badge-amber  { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.sc-badge-gray   { background: rgba(100,116,139,0.15);color: #94a3b8; }
+.sc-badge-red    { background: rgba(239,68,68,0.15);  color: #f87171; }
+
+/* ── Section header label ───────────────────────────────────────── */
+.sc-section-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sc-dim);
+}
+
+/* ── Card depth ─────────────────────────────────────────────────── */
+.sc-card-depth {
+  background: var(--sc-card);
+  border: 1px solid var(--sc-rim);
+  border-radius: 0.875rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(255,255,255,0.025) inset;
+}
 
 /* ── Focus ring ─────────────────────────────────────────────────── */
 .sc-focus-ring:focus-visible {
@@ -141,51 +206,22 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
   box-shadow: 0 0 0 2px var(--sc-brand);
 }
 
-/* ── Leaflet fixes ──────────────────────────────────────────────── */
-.leaflet-container {
-  background: #111827;
-}
-.leaflet-tile-pane {
-  filter: brightness(0.95) contrast(1.05);
-}
-[data-theme="light"] .leaflet-tile-pane {
-  filter: none;
-}
-[data-theme="light"] .leaflet-container {
-  background: #e2e8f0;
-}
-
 /* ── Scrollbar hide ─────────────────────────────────────────────── */
 .scrollbar-none { scrollbar-width: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 
-/* ── Leaflet popup chrome override ─────────────────────────────── */
+/* ── Leaflet fixes ──────────────────────────────────────────────── */
+.leaflet-container { background: #0a0a12; }
+.leaflet-tile-pane { filter: brightness(0.9) contrast(1.1) saturate(0.85); }
+[data-theme="light"] .leaflet-tile-pane { filter: none; }
+[data-theme="light"] .leaflet-container { background: #e2e8f0; }
 .leaflet-popup-content-wrapper {
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
+  background: transparent !important; box-shadow: none !important;
+  padding: 0 !important; border-radius: 0 !important;
 }
-.leaflet-popup-content {
-  margin: 0 !important;
-}
+.leaflet-popup-content { margin: 0 !important; }
 .leaflet-popup-tip-container { display: none !important; }
 .leaflet-popup-close-button {
-  color: #6b7280 !important;
-  top: 8px !important;
-  right: 10px !important;
-  font-size: 16px !important;
-}
-
-/* ── Map live-pin pulse ─────────────────────────────────────────── */
-@keyframes sc-ping {
-  0%   { transform: scale(1);   opacity: 0.7; }
-  70%  { transform: scale(2.2); opacity: 0;   }
-  100% { transform: scale(2.2); opacity: 0;   }
-}
-
-/* ── Citizen-style breathing glow on map pins ──────────────────── */
-@keyframes sc-breathe {
-  0%, 100% { opacity: 0.75; transform: scale(1); }
-  50%      { opacity: 1;    transform: scale(1.12); }
+  color: #6b7280 !important; top: 8px !important;
+  right: 10px !important; font-size: 16px !important;
 }

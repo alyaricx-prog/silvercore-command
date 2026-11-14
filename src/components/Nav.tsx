@@ -44,8 +44,6 @@ const TrophyIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
   </svg>
 )
-
-
 const BellIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
     <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -62,8 +60,8 @@ const RouteIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 17V9a6 6 0 0112 0v8" />
   </svg>
 )
-type NavProps = { role: Role }
 
+type NavProps = { role: Role }
 type NavLink = { href: string; label: string; icon: React.ReactNode }
 
 export default function Nav({ role }: NavProps) {
@@ -72,50 +70,56 @@ export default function Nav({ role }: NavProps) {
 
   const links: NavLink[] = isHost
     ? [
-        { href: '/dashboard',    label: 'Home',      icon: <HomeIcon /> },
-        { href: '/assignments',  label: 'Assign',    icon: <ListIcon /> },
-        { href: '/map',          label: 'Map',       icon: <MapIcon /> },
-        { href: '/customers',    label: 'Customers', icon: <UsersIcon /> },
-        { href: '/intelligence', label: 'Intel',     icon: <ChartIcon /> },
-        { href: '/goals',        label: 'Goals',     icon: <TrophyIcon /> },
-        { href: '/reminders',    label: 'Remind',    icon: <BellIcon /> },
-        { href: '/vault',        label: 'Vault',     icon: <FolderIcon /> },
-        { href: '/settings',     label: 'Settings',  icon: <GearIcon /> },
+        { href: '/dashboard',    label: 'Home',    icon: <HomeIcon /> },
+        { href: '/assignments',  label: 'Assign',  icon: <ListIcon /> },
+        { href: '/map',          label: 'Map',     icon: <MapIcon /> },
+        { href: '/customers',    label: 'People',  icon: <UsersIcon /> },
+        { href: '/intelligence', label: 'Intel',   icon: <ChartIcon /> },
+        { href: '/goals',        label: 'Goals',   icon: <TrophyIcon /> },
+        { href: '/reminders',    label: 'Alerts',  icon: <BellIcon /> },
+        { href: '/vault',        label: 'Vault',   icon: <FolderIcon /> },
+        { href: '/settings',     label: 'Settings',icon: <GearIcon /> },
       ]
     : [
-        { href: '/dashboard', label: 'Home',     icon: <HomeIcon /> },
-        { href: '/my-work',   label: 'My Work',  icon: <BriefcaseIcon /> },
-        { href: '/map',       label: 'Map',      icon: <MapIcon /> },
-        { href: '/route',     label: 'Route',    icon: <RouteIcon /> },
-        { href: '/customers', label: 'Customers',icon: <UsersIcon /> },
-        { href: '/goals',     label: 'Goals',    icon: <TrophyIcon /> },
-        { href: '/reminders', label: 'Remind',   icon: <BellIcon /> },
-        { href: '/vault',     label: 'Vault',    icon: <FolderIcon /> },
-        { href: '/settings',  label: 'Settings', icon: <GearIcon /> },
+        { href: '/dashboard', label: 'Home',    icon: <HomeIcon /> },
+        { href: '/my-work',   label: 'My Work', icon: <BriefcaseIcon /> },
+        { href: '/map',       label: 'Map',     icon: <MapIcon /> },
+        { href: '/route',     label: 'Route',   icon: <RouteIcon /> },
+        { href: '/customers', label: 'People',  icon: <UsersIcon /> },
+        { href: '/goals',     label: 'Goals',   icon: <TrophyIcon /> },
+        { href: '/reminders', label: 'Alerts',  icon: <BellIcon /> },
+        { href: '/vault',     label: 'Vault',   icon: <FolderIcon /> },
+        { href: '/settings',  label: 'Settings',icon: <GearIcon /> },
       ]
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 sc-glass border-t border-rim pb-safe">
-      <div className="flex items-stretch h-14 overflow-x-auto scrollbar-none">
+      <div className="flex items-stretch h-[3.75rem] overflow-x-auto scrollbar-none">
         {links.map(link => {
           const active = path === link.href || path.startsWith(link.href + '/')
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`flex-1 min-w-[52px] flex flex-col items-center justify-center gap-0.5 transition-all relative ${
-                active ? 'text-hi' : 'text-dim hover:text-lo'
-              }`}
+              className="flex-1 min-w-[52px] flex flex-col items-center justify-center gap-0.5 relative transition-all"
             >
+              {/* Active pill background */}
               {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full sc-brand-bg" />
+                <span
+                  className="absolute inset-x-1.5 top-1.5 bottom-1.5 rounded-xl"
+                  style={{ background: 'rgba(var(--sc-brand-rgb,59,130,246),0.12)' }}
+                />
               )}
-              <span className={`transition-transform ${active ? 'scale-110' : ''}`}
-                style={active ? { color: 'var(--sc-brand)' } : undefined}>
+              <span
+                className="relative z-10 transition-transform"
+                style={active ? { color: 'var(--sc-brand)', transform: 'scale(1.1)' } : { color: 'var(--sc-dim)' }}
+              >
                 {link.icon}
               </span>
-              <span className={`text-[9px] font-medium leading-none ${active ? 'font-semibold' : ''}`}
-                style={active ? { color: 'var(--sc-brand)' } : undefined}>
+              <span
+                className="relative z-10 text-[9px] font-semibold leading-none tracking-wide"
+                style={active ? { color: 'var(--sc-brand)' } : { color: 'var(--sc-dim)' }}
+              >
                 {link.label}
               </span>
             </Link>

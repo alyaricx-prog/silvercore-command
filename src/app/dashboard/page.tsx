@@ -111,7 +111,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="sc-enter min-h-screen bg-page text-hi pb-28">
+    <main className="sc-enter min-h-screen bg-page text-hi pb-32">
       {/* Header */}
       <AppHeader
         organisationId={profile.organisation_id}
@@ -134,7 +134,7 @@ export default function DashboardPage() {
 
         {/* Daily Pulse */}
         {todayPulse === null && (
-          <div className="bg-card border border-rim rounded-xl p-4">
+          <div className="sc-card-depth p-4">
             <h2 className="text-xs text-dim uppercase tracking-widest mb-3">Daily Pulse</h2>
             <p className="text-xs text-dim mb-3">How&apos;s the floor feeling today?</p>
             <div className="flex justify-between gap-2 mb-3">
@@ -162,7 +162,7 @@ export default function DashboardPage() {
           </div>
         )}
         {todayPulse && (
-          <div className="bg-card border border-rim rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="sc-card-depth px-4 py-3 flex items-center gap-3">
             <span className="text-xl">{todayPulse.score >= 4 ? '🟢' : todayPulse.score >= 3 ? '🟡' : '🔴'}</span>
             <div>
               <p className="text-sm font-medium text-hi">Pulse submitted — {todayPulse.score}/5</p>
@@ -171,59 +171,53 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: 'Pending',   value: pending,    color: 'text-hi' },
-            { label: 'Active',    value: inProgress, color: 'text-blue-400' },
-            { label: 'Completed', value: completed,  color: 'text-green-400' },
-          ].map(s => (
-            <div key={s.label} className="bg-card rounded-xl p-4 text-center border border-rim">
-              <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-              <div className="text-xs text-dim mt-0.5">{s.label}</div>
+        {/* Stats — large numbers */}
+        <div className="grid grid-cols-3 gap-2.5">
+          {([
+            { label: 'Pending',  value: pending,    accent: '#94a3b8' },
+            { label: 'Active',   value: inProgress, accent: 'var(--sc-brand)' },
+            { label: 'Closed',   value: completed,  accent: '#4ade80' },
+          ] as const).map(s => (
+            <div key={s.label} className="sc-stat-tile text-center">
+              <div className="text-4xl font-black leading-none mb-1" style={{ color: s.accent }}>{s.value}</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-dim">{s.label}</div>
             </div>
           ))}
         </div>
 
         {/* Quick links */}
-        <div className="space-y-3">
-          <h2 className="text-xs font-semibold text-dim uppercase tracking-widest">Quick Access</h2>
+        <div className="space-y-2">
+          <h2 className="sc-section-label mb-3">Quick Access</h2>
           {isHost ? (
             <>
-              <QuickLink
-                href="/assignments"
-                title="Assignments"
+              <QuickLink href="/assignments" title="Assignments"
                 subtitle={`${pending} pending · ${inProgress} active`}
-                icon="📋"
-              />
-              <QuickLink href="/map" title="Deal Map" subtitle="Live field activity" icon="🗺" />
-              <QuickLink href="/customers" title="Customers" subtitle="CRM & timelines" icon="👥" />
-              <QuickLink href="/intelligence" title="Intelligence" subtitle="Reports & contracts" icon="📊" />
-              <QuickLink href="/goals" title="Goals & Badges" subtitle="Team performance" icon="🏆" />
-              <QuickLink href="/reminders" title="Reminders" subtitle="Upcoming alerts" icon="⏰" />
-              <QuickLink href="/vault" title="Document Vault" subtitle="Files & uploads" icon="📁" />
+                icon="📋" accent="var(--sc-brand)" />
+              <QuickLink href="/map" title="Deal Map" subtitle="Live field activity" icon="🗺" accent="#38bdf8" />
+              <QuickLink href="/customers" title="Customers" subtitle="CRM & timelines" icon="👥" accent="#a78bfa" />
+              <QuickLink href="/intelligence" title="Intelligence" subtitle="Reports & contracts" icon="📊" accent="#34d399" />
+              <QuickLink href="/goals" title="Goals & Badges" subtitle="Team performance" icon="🏆" accent="#fbbf24" />
+              <QuickLink href="/reminders" title="Reminders" subtitle="Upcoming alerts" icon="⏰" accent="#f87171" />
+              <QuickLink href="/vault" title="Document Vault" subtitle="Files & uploads" icon="📁" accent="#94a3b8" />
             </>
           ) : (
             <>
-              <QuickLink
-                href="/my-work"
-                title="My Work"
+              <QuickLink href="/my-work" title="My Work"
                 subtitle={`${pending + inProgress} open assignments`}
-                icon="💼"
-              />
-              <QuickLink href="/map" title="Deal Map" subtitle="Team activity" icon="🗺" />
-              <QuickLink href="/route" title="Route Planner" subtitle="Plan your day" icon="🧭" />
-              <QuickLink href="/customers" title="Customers" subtitle="Your contacts" icon="👥" />
-              <QuickLink href="/goals" title="Goals & Badges" subtitle="Your progress" icon="🏆" />
-              <QuickLink href="/reminders" title="Reminders" subtitle="Upcoming alerts" icon="⏰" />
-              <QuickLink href="/vault" title="Document Vault" subtitle="Field resources" icon="📁" />
+                icon="💼" accent="var(--sc-brand)" />
+              <QuickLink href="/map" title="Deal Map" subtitle="Team activity" icon="🗺" accent="#38bdf8" />
+              <QuickLink href="/route" title="Route Planner" subtitle="Plan your day" icon="🧭" accent="#34d399" />
+              <QuickLink href="/customers" title="Customers" subtitle="Your contacts" icon="👥" accent="#a78bfa" />
+              <QuickLink href="/goals" title="Goals & Badges" subtitle="Your progress" icon="🏆" accent="#fbbf24" />
+              <QuickLink href="/reminders" title="Reminders" subtitle="Upcoming alerts" icon="⏰" accent="#f87171" />
+              <QuickLink href="/vault" title="Document Vault" subtitle="Field resources" icon="📁" accent="#94a3b8" />
             </>
           )}
         </div>
 
         {/* Empty state */}
         {assignments.length === 0 && (
-          <div className="bg-card border border-dashed border-rim2 rounded-xl px-5 py-8 text-center">
+          <div className="sc-card-depth px-5 py-8 text-center border-dashed border-rim2">
             <p className="text-3xl mb-2">{isHost ? '📋' : '🎯'}</p>
             <p className="text-sm font-semibold text-hi">
               {isHost ? 'No assignments yet' : "You're all caught up"}
@@ -244,26 +238,38 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Recent */}
+        {/* Recent activity feed */}
         {assignments.length > 0 && (
-          <div className="space-y-2">
-            <h2 className="text-xs font-semibold text-dim uppercase tracking-widest">Recent</h2>
-            {assignments.slice(0, 3).map(a => (
-              <div
-                key={a.id}
-                className="bg-card border border-rim rounded-xl px-4 py-3 flex items-center justify-between"
-              >
-                <div>
-                  <p className="text-sm font-medium text-hi">{a.title}</p>
-                  <p className="text-xs text-dim mt-0.5 capitalize">{a.status.replace('_', ' ')}</p>
-                </div>
-                <span className={`w-2 h-2 rounded-full ${
-                  a.status === 'completed'  ? 'bg-green-400' :
-                  a.status === 'in_progress' ? 'bg-blue-400' :
-                  a.status === 'acknowledged'? 'bg-purple-400' : 'bg-gray-600'
-                }`} />
-              </div>
-            ))}
+          <div>
+            <h2 className="sc-section-label mb-3">Recent Activity</h2>
+            <div className="space-y-2">
+            {assignments.slice(0, 5).map(a => {
+              const statusColor =
+                a.status === 'completed'    ? '#4ade80' :
+                a.status === 'in_progress'  ? 'var(--sc-brand)' :
+                a.status === 'acknowledged' ? '#c084fc' : '#55556a'
+              const statusLabel =
+                a.status === 'completed'    ? 'Closed'  :
+                a.status === 'in_progress'  ? 'Active'  :
+                a.status === 'acknowledged' ? 'Ack'     : 'Pending'
+              const badgeCls =
+                a.status === 'completed'    ? 'sc-badge sc-badge-green'  :
+                a.status === 'in_progress'  ? 'sc-badge sc-badge-blue'   :
+                a.status === 'acknowledged' ? 'sc-badge sc-badge-purple' :
+                                             'sc-badge sc-badge-gray'
+              return (
+                <a key={a.id} href="/assignments"
+                  className="sc-feed-item flex items-center justify-between gap-3"
+                  style={{ borderLeftColor: statusColor }}>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-hi leading-snug truncate">{a.title}</p>
+                    {a.address && <p className="text-xs text-dim mt-0.5 truncate">{a.address}</p>}
+                  </div>
+                  <span className={badgeCls}>{statusLabel}</span>
+                </a>
+              )
+            })}
+            </div>
           </div>
         )}
       </div>
@@ -273,21 +279,22 @@ export default function DashboardPage() {
   )
 }
 
-function QuickLink({ href, title, subtitle, icon }: {
-  href: string; title: string; subtitle: string; icon: string
+function QuickLink({ href, title, subtitle, icon, accent }: {
+  href: string; title: string; subtitle: string; icon: string; accent?: string
 }) {
   return (
     <a
       href={href}
-      className="flex items-center gap-4 bg-card border border-rim hover:border-rim2 rounded-xl px-4 py-4 transition group"
+      className="sc-feed-item flex items-center gap-3.5"
+      style={{ borderLeftColor: accent || 'var(--sc-brand)' }}
     >
-      <span className="text-2xl">{icon}</span>
+      <span className="text-xl shrink-0 w-7 text-center">{icon}</span>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm text-hi">{title}</p>
-        <p className="text-xs text-dim">{subtitle}</p>
+        <p className="font-bold text-sm text-hi leading-snug">{title}</p>
+        <p className="text-xs text-dim mt-0.5">{subtitle}</p>
       </div>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-        className="w-4 h-4 text-dim group-hover:text-lo transition shrink-0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+        className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--sc-dim)' }}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
       </svg>
     </a>
